@@ -1,0 +1,158 @@
+{% extends 'compiler/base.html' %}
+{% load static %}
+
+{% block extra_head %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.46.0/min/vs/loader.min.js"></script>
+{% endblock %}
+
+{% block content %}
+
+    <div id="modalOverlay" class="modal-overlay" onclick="toggleDebug()"></div>
+    <div id="debugModal" class="modal">
+        <div class="modal-header">
+            <span><i class="ph-bold ph-gear"></i> Cài đặt & Hiển thị</span>
+            <button onclick="toggleDebug()"><i class="ph-bold ph-x"></i></button>
+        </div>
+        <div class="modal-body">
+            <div style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed var(--border);">
+                <div style="font-weight: 700; margin-bottom: 10px; font-size: 13px; color: var(--text-main);">Giao diện & Công cụ:</div>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <button id="themeToggleBtn" class="setting-btn" onclick="toggleTheme(event)"><i class="ph-bold ph-moon"></i> Giao diện tối</button>
+                    <button id="btnToggleVis" class="setting-btn" onclick="toggleVisualizer()"><i class="ph-bold ph-eye-slash"></i> Ẩn bảng Visualizer</button>
+                    <div style="display: flex; gap: 8px;">
+                        <button id="btnTogglePrev" class="setting-btn flex-1" onclick="togglePrevLine()"><i class="ph-fill ph-circle" style="color: #22c55e;"></i> Line</button>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed var(--border);">
+                <div style="font-weight: 700; margin-bottom: 10px; font-size: 13px; color: var(--text-main);">Tệp tin (Local):</div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="setting-btn flex-1" onclick="document.getElementById('fileInput').click()"><i class="ph-bold ph-folder-open"></i> Tải code</button>
+                    <button class="setting-btn flex-1" onclick="saveCodeLocal()"><i class="ph-bold ph-floppy-disk"></i> Lưu code</button>
+                </div>
+            </div>
+
+            <div style="font-weight: 700; margin-bottom: 10px; font-size: 13px; color: var(--text-main);">Hiển thị biến (Debug):</div>
+            <div id="debugList">
+                <div style="color: var(--text-muted); font-size: 13px; text-align: center;">Chưa có dữ liệu. Hãy chạy code trước!</div>
+            </div>
+        </div>
+        <div style="padding: 12px 20px; border-top: 1px solid var(--border); background: var(--bg-io); display: flex; justify-content: flex-end;">
+            <a href="report.html" class="btn-report" target="_blank" title="Báo cáo lỗi hoặc góp ý">
+                <i class="ph-bold ph-bug"></i> Báo lỗi
+            </a>
+        </div>
+    </div>
+
+    <div class="header">
+        <a href="{% url 'index' %}" class="logo" style="text-decoration: none; color: inherit;"><span>[ / ]</span> Unicorns Compiler</a>
+        <div class="controls">
+            <input type="file" id="fileInput" style="display: none;" accept=".py,.cpp,.txt,.c">
+            <button class="btn-icon" onclick="saveSnippet()" title="Lưu code lên hệ thống"><i class="ph-bold ph-cloud-arrow-up"></i></button>
+
+            <div class="control-divider"></div>
+
+            <select id="langSelect" onchange="changeLanguage()" title="Chọn ngôn ngữ lập trình">
+                <option value="python" {% if user.is_authenticated and user.profile.default_language == 'python' %}selected{% endif %}>Python 3</option>
+                <option value="cpp" {% if user.is_authenticated and user.profile.default_language == 'cpp' %}selected{% endif %}>C++ (GDB)</option>
+            </select>
+
+            {% if user.is_authenticated and user.profile %}
+            <!-- Sync moved to base.html -->
+            {% endif %}
+
+            <div class="slider-container" style="display: flex; align-items: center; gap: 8px; margin: 0 10px;">
+                <input type="range" id="timeSlider" min="0" max="0" value="0" disabled title="Kéo để tua thời gian">
+                <span id="stepCounter" style="font-size: 12px; font-weight: bold; min-width: 45px; text-align: center; color: var(--text-muted);">0/0</span>
+            </div>
+            
+            <button id="prevBtn" onclick="prevStep()" disabled title="Lùi lại 1 bước (Ctrl + ←)"><i class="ph-bold ph-skip-back"></i></button>
+            <button id="nextBtn" onclick="nextStep()" disabled title="Tiếp tục 1 bước (Ctrl + →)"><i class="ph-bold ph-skip-forward"></i></button>
+            
+            <span id="loader"><span class="spinning"><i class="ph-bold ph-gear"></i></span> Đang xử lý...</span>
+            <button id="runBtn" class="btn-run" onclick="runCode()" title="Biên dịch và chạy mô phỏng (Ctrl + Enter)"><i class="ph-bold ph-play"></i> Chạy Code</button>
+
+            <div class="control-divider"></div>
+
+            <button onclick="toggleDebug()" title="Cài đặt giao diện & hiển thị"><i class="ph-bold ph-gear"></i> Cài đặt</button>
+
+            {% if user.is_authenticated %}
+            <div class="control-divider"></div>
+            <div class="user-dropdown" style="position: relative; margin-left: 10px;">
+                <button style="display: flex; align-items: center; gap: 5px; font-weight: bold; color: var(--text-accent); padding: 6px 12px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; background: var(--bg-panel); transition: all 0.2s;" onclick="document.getElementById('userMenu').classList.toggle('show')">
+                    <i class="ph-bold ph-user"></i> {{ user.username }} ▾
+                </button>
+                <div id="userMenu" class="dropdown-content" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 5px; background: var(--bg-panel); min-width: 150px; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 1000; overflow: hidden;">
+                    <a href="{% url 'profile' %}" style="display: block; padding: 10px 15px; color: var(--text-main); text-decoration: none; border-bottom: 1px solid var(--border); transition: background 0.2s;">Hồ sơ</a>
+                    <form action="{% url 'logout' %}" method="post" style="margin: 0;">
+                        {% csrf_token %}
+                        <button type="submit" style="width: 100%; text-align: left; padding: 10px 15px; background: none; border: none; color: #ef4444; cursor: pointer; font-size: 14px; font-family: inherit; transition: background 0.2s;">Đăng xuất</button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="metrics-bar">
+        <span><i class="ph-bold ph-timer"></i> Thời gian chạy: <span id="timeMetric" class="metrics-value">0.00</span> ms</span>
+        <span><i class="ph-bold ph-floppy-disk"></i> Bộ nhớ: <span id="memMetric" class="metrics-value">0.00</span> KB</span>
+    </div>
+
+    <div class="mobile-tabs">
+        <button class="tab-btn active" onclick="switchTab('editor')"><i class="ph-bold ph-code"></i> Editor</button>
+        <button class="tab-btn" onclick="switchTab('console')"><i class="ph-bold ph-terminal-window"></i> Console</button>
+        <button class="tab-btn" onclick="switchTab('visualizer')"><i class="ph-bold ph-magnifying-glass"></i> Visualizer</button>
+    </div>
+
+    <div class="workspace" id="workspace">
+        <div class="pane-left" id="leftPane">
+            <div class="editor-container" id="editorContainer" style="width: 100%; height: 100%;"></div>
+            
+            <div class="io-wrapper" id="ioWrapper">
+                <div class="io-pane">
+                    <div class="pane-header"><i class="ph-bold ph-keyboard"></i> Đầu vào</div>
+                    <textarea id="stdInput" class="io-content" spellcheck="false" placeholder="10&#10;20"></textarea>
+                </div>
+                <div class="io-pane">
+                    <div class="pane-header"><i class="ph-bold ph-terminal-window"></i> Đầu ra</div>
+                    <div id="consoleOutput" class="io-content"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="resizer" id="resizer"></div>
+
+        <div class="pane-right pane" id="rightPane">
+            <div class="pane-header"><i class="ph-bold ph-magnifying-glass"></i> Các biến / Hàm</div>
+            <div id="visualizerArea" class="visualizer-area">
+                <div style="color: #8b949e; font-size: 13px; text-align: center; margin-top: 40px;">
+                    Biến sẽ được mô phỏng theo từng hàm tại đây.
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block extra_js %}
+    {% if snippet_code %}
+    {{ snippet_code|json_script:"init-snippet-code" }}
+    {{ snippet_input|json_script:"init-snippet-input" }}
+    {{ snippet_lang|json_script:"initial-snippet-lang" }}
+    {{ user_templates_json|json_script:"user-templates-data" }}
+    <script>
+        window.initialSnippetCode = JSON.parse(document.getElementById('init-snippet-code').textContent);
+        window.initialSnippetInput = JSON.parse(document.getElementById('init-snippet-input').textContent);
+        window.initialSnippetLang = JSON.parse(document.getElementById('initial-snippet-lang').textContent);
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        window.currentSnippetHash = urlParams.get('snippet');
+    </script>
+    {% endif %}
+    {% if user_templates %}
+    {{ user_templates|json_script:"user-templates-data" }}
+    {% endif %}
+    <script src="{% static 'compiler/js/script.js' %}?v=1780623281"></script>
+{% endblock %}

@@ -1,0 +1,124 @@
+{% extends 'compiler/base.html' %}
+{% load static %}
+
+{% block title %}Review Snippet - Unicorns Compiler{% endblock %}
+
+{% block extra_head %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.46.0/min/vs/loader.min.js"></script>
+{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'compiler/css/review.css' %}">
+{% endblock %}
+
+{% block content %}
+
+    <div class="header">
+        <a href="{% url 'index' %}" class="logo" style="text-decoration: none; color: inherit;"><span>[ / ]</span> Unicorns Compiler</a>
+        <div class="controls">
+            <span style="color: var(--text-muted); margin-right: 15px;">Snippet ID: <strong>{{ snippet.hash_id }}</strong></span>
+            
+            <a href="/?snippet={{ snippet.hash_id }}" class="btn-edit-snippet"><i class="ph-bold ph-pencil-simple"></i> Đưa vào edit</a>
+            {% if user.is_authenticated %}
+            <button onclick="saveToPersonalSnippet()" class="btn-save-snippet" style="margin-left: 10px;"><i class="ph-bold ph-floppy-disk"></i> Lưu về Snippet cá nhân</button>
+            {% endif %}
+
+            <div class="control-divider"></div>
+
+            {% if user.is_authenticated %}
+            <div class="user-dropdown" style="position: relative; margin-left: 10px;">
+                <button style="display: flex; align-items: center; gap: 5px; font-weight: bold; color: var(--text-accent); padding: 6px 12px; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; background: var(--bg-panel);" onclick="document.getElementById('userMenu').classList.toggle('show')">
+                    <i class="ph-bold ph-user"></i> {{ user.username }} ▾
+                </button>
+                <div id="userMenu" class="dropdown-content" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 5px; background: var(--bg-panel); min-width: 150px; border: 1px solid var(--border); border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); z-index: 1000; overflow: hidden;">
+                    <a href="{% url 'profile' %}" style="display: block; padding: 10px 15px; color: var(--text-main); text-decoration: none; border-bottom: 1px solid var(--border); transition: background 0.2s;">Hồ sơ</a>
+                    <form action="{% url 'logout' %}" method="post" style="margin: 0;">
+                        {% csrf_token %}
+                        <button type="submit" style="width: 100%; text-align: left; padding: 10px 15px; background: none; border: none; color: #ff4d4f; cursor: pointer; font-size: 14px; font-family: inherit; transition: background 0.2s;">Đăng xuất</button>
+                    </form>
+                </div>
+            </div>
+            {% else %}
+            <a href="{% url 'login' %}" style="color: var(--text-main); margin-left: 10px; text-decoration: none;">Đăng nhập</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="workspace" id="workspace">
+        <div class="pane-left" id="leftPane">
+            <div class="editor-container" id="editorContainer"></div>
+        </div>
+
+        <div class="resizer" id="resizer"></div>
+
+        <div class="pane-right" id="rightPane">
+            <div class="meta-info">
+                <div style="font-size: 16px; margin-bottom: 5px; color: var(--text-accent);">Tên Snippet: <strong>{{ snippet.title|default:"Không tên" }}</strong></div>
+                <div>Ngôn ngữ: <strong>{{ snippet.language|upper }}</strong></div>
+                <div>Ngày tạo: <strong>{{ snippet.created_at|date:"d/m/Y H:i" }}</strong></div>
+                <div>Tác giả: <strong>{% if snippet.author %}{{ snippet.author.username }}{% else %}Ẩn danh{% endif %}</strong></div>
+                <div style="margin-top: 5px;">
+                    Chế độ: 
+                    {% if snippet.is_public %}
+                        <strong style="color: #28a745;">Công khai</strong>
+                    {% else %}
+                        <strong style="color: #dc3545;">Riêng tư</strong>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="io-section">
+                <div class="io-title"><i class="ph-bold ph-keyboard"></i> Đầu vào (Input)</div>
+                <div class="io-content-box">{% if snippet.input_text %}{{ snippet.input_text }}{% else %}<i>(Không có)</i>{% endif %}</div>
+            </div>
+            
+            <div class="io-section" style="margin-top: auto; padding-top: 20px; border-top: 1px dashed var(--border);">
+                <p style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">
+                    Bạn đang xem mã nguồn ở chế độ chỉ đọc (read-only).<br>
+                    Để chạy hoặc chỉnh sửa, hãy nhấn <b>Đưa vào edit</b>.
+                </p>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'compiler/js/review.js' %}"></script>
+    <script>
+        const codeContent = `{{ code_content|escapejs }}`;
+        const snippetLang = `{{ snippet.language }}`;
+        initReviewEditor(codeContent, snippetLang);
+
+        async function saveToPersonalSnippet() {
+            try {
+                const title = prompt("Nhập tên cho Snippet này:", "Bản sao của " + "{{ snippet.title|default:'Không tên' }}");
+                if (title === null) return; // User cancelled
+                
+                const payload = {
+                    language: snippetLang,
+                    code: codeContent,
+                    inputs: `{{ snippet.input_text|escapejs }}`,
+                    title: title,
+                    is_public: false // Mặc định riêng tư khi copy
+                };
+                
+                const response = await fetch('/api/save_snippet/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    alert('Đã lưu thành Snippet cá nhân thành công!');
+                    window.location.href = '/profile/'; // Redirect to profile to manage snippets
+                } else {
+                    alert('Lỗi khi lưu code: ' + result.error);
+                }
+            } catch (err) {
+                alert('Lỗi kết nối: ' + err.message);
+            }
+        }
+    </script>
+{% endblock %}

@@ -1,0 +1,91 @@
+/* Auth Pages */
+body.auth-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background-color: var(--bg-base);
+    color: var(--text-main);
+    margin: 0;
+}
+.login-container {
+    background-color: var(--bg-panel);
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    width: 100%;
+    max-width: 400px;
+    border: 1px solid var(--border);
+}
+.login-container h2 {
+    text-align: center;
+    margin-top: 0;
+    color: var(--text-accent);
+}
+.error-message {
+    color: #ff4d4f;
+    margin-bottom: 15px;
+    text-align: center;
+    font-size: 14px;
+}
+.btn-login {
+    width: 100%;
+    padding: 10px;
+    background-color: var(--text-accent);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: opacity 0.2s;
+}
+.btn-login:hover {
+    opacity: 0.9;
+}
+
+.form-group {
+    margin-bottom: 18px;
+}
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: var(--text-muted);
+    font-size: 14px;
+}
+.form-group input, .form-group select, .form-group textarea {
+    width: 100%;
+    padding: 12px 14px;
+    font-size: 15px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background-color: var(--bg-base);
+    color: var(--text-main);
+    box-sizing: border-box;
+    font-family: inherit;
+    transition: border-color 0.2s;
+    resize: vertical;
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    outline: none;
+    border-color: var(--text-accent);
+}
+.form-group input[readonly] {
+    background-color: var(--bg-panel);
+    color: var(--text-muted);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+.form-group span.helptext {
+    display: block;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+.form-group ul {
+    padding-left: 20px;
+    margin: 5px 0 0;
+    font-size: 12px;
+    color: #ff4d4f;
+}

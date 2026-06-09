@@ -1,0 +1,580 @@
+{% extends 'compiler/base.html' %}
+{% load static %}
+
+{% block title %}Hồ sơ của tôi - Unicorns Compiler{% endblock %}
+
+{% block body_class %}scroll-page{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'compiler/css/profile.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Breadcrumb Header -->
+    <div class="dash-header">
+        <div class="dash-title">
+            <a href="{% url 'index' %}" class="logo" style="text-decoration: none; color: inherit;"><span>[ / ]</span> Unicorns Compiler</a>
+        </div>
+        <div class="dash-actions">
+            <a href="{% url 'index' %}">← Trang chủ</a>
+            <span class="badge-role">Hồ sơ</span>
+        </div>
+    </div>
+
+
+
+    <div class="dash-main">
+        <!-- Sidebar -->
+        <div class="dash-sidebar">
+            <div class="profile-name">{% if user.first_name %}{{ user.first_name }} {{ user.last_name }}{% else %}{{ user.username }}{% endif %}</div>
+            <div class="profile-desc">Hồ sơ — chuyên môn và cấu hình hệ thống.</div>
+            <a href="{% url 'password_change' %}" class="btn-reset-pw" style="margin-top: 15px;">Đặt lại mật khẩu</a>
+        </div>
+
+        <!-- Content Area -->
+        <div class="dash-content">
+            
+            <!-- TÀI KHOẢN -->
+            <div id="content-account">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div style="background: rgba(16,185,129,0.1); color: #10b981; border: 1px solid rgba(16,185,129,0.2); padding: 12px 15px; border-radius: 8px; margin-bottom: 25px; font-size: 13px; font-weight: bold;">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+
+                <form method="post" action="{% url 'profile' %}">
+                    {% csrf_token %}
+                    
+                    <div class="info-section">
+                        <div class="info-header">
+                            <div class="info-title">
+                                <h3>Thông tin chung</h3>
+                                <span>Tài khoản và liên hệ cơ bản</span>
+                            </div>
+                            <button type="submit" class="btn-edit">Chỉnh sửa</button>
+                        </div>
+                        <div class="data-table">
+                            <div class="data-row">
+                                <div class="data-label">Tên đăng nhập</div>
+                                <div class="data-value">
+                                    {{ u_form.username }}
+                                    {% for error in u_form.username.errors %}<div class="error-text">{{ error }}</div>{% endfor %}
+                                </div>
+                            </div>
+                            <div class="data-row">
+                                <div class="data-label">Tên</div>
+                                <div class="data-value">
+                                    {{ u_form.last_name }}
+                                    {% for error in u_form.last_name.errors %}<div class="error-text">{{ error }}</div>{% endfor %}
+                                </div>
+                            </div>
+                            <div class="data-row">
+                                <div class="data-label">Họ và Tên lót</div>
+                                <div class="data-value">
+                                    {{ u_form.first_name }}
+                                    {% for error in u_form.first_name.errors %}<div class="error-text">{{ error }}</div>{% endfor %}
+                                </div>
+                            </div>
+                            <div class="data-row">
+                                <div class="data-label">Email liên hệ</div>
+                                <div class="data-value">
+                                    {{ u_form.email }}
+                                    {% for error in u_form.email.errors %}<div class="error-text">{{ error }}</div>{% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-section">
+                        <div class="info-header">
+                            <div class="info-title">
+                                <h3>Cài đặt IDE</h3>
+                                <span>Tùy chỉnh giao diện và cấu hình biên dịch</span>
+                            </div>
+                            <button type="submit" class="btn-edit">Chỉnh sửa</button>
+                        </div>
+                        <div class="data-table">
+                            <div class="data-row">
+                                <div class="data-label">Ngôn ngữ mặc định</div>
+                                <div class="data-value">
+                                    {{ p_form.default_language }}
+                                    {% for error in p_form.default_language.errors %}<div class="error-text">{{ error }}</div>{% endfor %}
+                                </div>
+                            </div>
+                            <div class="data-row">
+                                <div class="data-label">Giao diện Hệ thống</div>
+                                <div class="data-value">
+                                    {{ p_form.favorite_theme }}
+                                    {% for error in p_form.favorite_theme.errors %}<div class="error-text">{{ error }}</div>{% endfor %}
+                                </div>
+                            </div>
+                            <div class="data-row">
+                                <div class="data-label">Theme Code Editor</div>
+                                <div class="data-value">
+                                    {{ p_form.editor_theme }}
+                                    {% for error in p_form.editor_theme.errors %}<div class="error-text">{{ error }}</div>{% endfor %}
+                                </div>
+                            </div>
+                            <div class="data-row">
+                                <div class="data-label">Font chữ Code</div>
+                                <div class="data-value">
+                                    {{ p_form.editor_font_family }}
+                                    {% for error in p_form.editor_font_family.errors %}<div class="error-text">{{ error }}</div>{% endfor %}
+                                </div>
+                            </div>
+                            <div class="data-row">
+                                <div class="data-label">Kích cỡ chữ Code</div>
+                                <div class="data-value">
+                                    {{ p_form.editor_font_size }}
+                                    {% for error in p_form.editor_font_size.errors %}<div class="error-text">{{ error }}</div>{% endfor %}
+                                </div>
+                            </div>
+                            <div class="data-row" style="align-items: flex-start;">
+                                <div class="data-label" style="padding-top: 6px;">Tiểu sử (Bio)</div>
+                                <div class="data-value">
+                                    {{ p_form.bio }}
+                                    {% for error in p_form.bio.errors %}<div class="error-text">{{ error }}</div>{% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- QUẢN LÝ TEMPLATES -->
+            <div id="content-templates">
+                <div class="info-section">
+                    <div class="info-header">
+                        <div class="info-title">
+                            <h3>Quản lý Templates</h3>
+                            <span>Các đoạn code mẫu được gọi nhanh trong Editor bằng phím tắt</span>
+                        </div>
+                    </div>
+                    <div class="template-manager">
+                        <div class="template-list-col">
+                            <ul class="template-list" id="templateList">
+                                <!-- Danh sách template nạp bằng JS -->
+                            </ul>
+                            <button class="template-add-btn" onclick="createNewTemplate()">+ Thêm Template mới</button>
+                        </div>
+                        <div class="template-edit-col" id="templateEditCol" style="display: none;">
+                            <input type="hidden" id="tplId">
+                            <div style="display: flex; gap: 10px;">
+                                <div class="form-group" style="flex: 1;">
+                                    <label>Tên gọi tắt (vd: body)</label>
+                                    <input type="text" id="tplName" placeholder="Tên snippet...">
+                                </div>
+                                <div class="form-group" style="flex: 1;">
+                                    <label>Ngôn ngữ</label>
+                                    <select id="tplLang">
+                                        <option value="all">Tất cả</option>
+                                        <option value="python">Python 3</option>
+                                        <option value="cpp">C++</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group" style="flex: 1; display: flex; flex-direction: column;">
+                                <label>Nội dung Code (Dùng $1, $2 làm tab stop)</label>
+                                <textarea id="tplCode" style="flex: 1; white-space: pre;"></textarea>
+                            </div>
+                            <div class="template-actions">
+                                <button class="btn-save-tpl" onclick="saveTemplate()">Lưu Template</button>
+                                <button class="btn-del-tpl" id="btnDelTpl" onclick="deleteTemplate()" style="display: none;">Xóa</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- QUẢN LÝ SNIPPETS -->
+            <div id="content-snippets">
+                <div class="info-section">
+                    <div class="info-header">
+                        <div class="info-title">
+                            <h3>Code Snippets</h3>
+                            <span>Quản lý các đoạn mã bạn đã lưu trữ hoặc chia sẻ</span>
+                        </div>
+                    </div>
+                    <div class="template-manager">
+                        <div class="template-list-col">
+                            <ul class="template-list" id="snippetList">
+                                <!-- Danh sách snippet nạp bằng JS -->
+                            </ul>
+                        </div>
+                        <div class="template-edit-col" id="snippetEditCol" style="display: none; justify-content: center;">
+                            <input type="hidden" id="snpHashId">
+                            <div class="form-group">
+                                <label>Tên Snippet</label>
+                                <input type="text" id="snpTitle" placeholder="Tên snippet...">
+                            </div>
+                            <div class="form-group">
+                                <label>Ngôn ngữ</label>
+                                <input type="text" id="snpLang" disabled style="cursor: not-allowed; opacity: 0.5;">
+                            </div>
+                            <div class="form-group" style="display: flex; align-items: center; gap: 10px; margin-top: 10px;">
+                                <input type="checkbox" id="snpPublic" style="width: auto; height: auto;">
+                                <label for="snpPublic" style="margin: 0; cursor: pointer; color: var(--text-main); font-size: 13px;">Công khai (Ai có link cũng xem được)</label>
+                            </div>
+                            <div class="template-actions" style="margin-top: 25px;">
+                                <button class="btn-save-tpl" onclick="saveSnippetMeta()">Lưu</button>
+                                <button class="btn-save-tpl" style="background: #10b981;" onclick="openSnippetCompiler()">Mở Editor</button>
+                                <button class="btn-save-tpl" style="background: #0ea5e9;" onclick="openSnippetPreview()">Preview</button>
+                                <button class="btn-del-tpl" id="btnDelSnp" onclick="deleteSnippet()">Xóa</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SHORTCUTS -->
+            <div id="content-shortcuts">
+                <div class="info-section">
+                    <div class="info-header">
+                        <div class="info-title">
+                            <h3>Cài đặt Phím tắt</h3>
+                            <span>Thiết lập tổ hợp phím (Lưu trên trình duyệt cục bộ)</span>
+                        </div>
+                        <button class="btn-edit" onclick="saveShortcuts()"><i class="ph-bold ph-floppy-disk"></i> Lưu cấu hình</button>
+                    </div>
+                    
+                    <div class="shortcut-grid">
+                        <div class="shortcut-card">
+                            <label>Chạy Code (Biên dịch & Chạy)</label>
+                            <div class="shortcut-input-wrap">
+                                <input type="text" id="keyRunCode" readonly placeholder="Bấm phím...">
+                                <button onclick="resetKey('keyRunCode', 'Ctrl+Enter')" title="Khôi phục mặc định">↺</button>
+                            </div>
+                        </div>
+                        <div class="shortcut-card">
+                            <label>Tới Bước Tiếp Theo</label>
+                            <div class="shortcut-input-wrap">
+                                <input type="text" id="keyNextStep" readonly placeholder="Bấm phím...">
+                                <button onclick="resetKey('keyNextStep', 'Ctrl+ArrowRight')" title="Khôi phục mặc định">↺</button>
+                            </div>
+                        </div>
+                        <div class="shortcut-card">
+                            <label>Lùi Lại Bước Trạng Thái</label>
+                            <div class="shortcut-input-wrap">
+                                <input type="text" id="keyPrevStep" readonly placeholder="Bấm phím...">
+                                <button onclick="resetKey('keyPrevStep', 'Ctrl+ArrowLeft')" title="Khôi phục mặc định">↺</button>
+                            </div>
+                        </div>
+                        <div class="shortcut-card">
+                            <label>Mở Menu Template</label>
+                            <div class="shortcut-input-wrap">
+                                <input type="text" id="keyOpenTemplate" readonly placeholder="Bấm phím...">
+                                <button onclick="resetKey('keyOpenTemplate', 'Alt+J')" title="Khôi phục mặc định">↺</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block extra_js %}
+<script>
+    let templates = [];
+    
+    document.addEventListener("DOMContentLoaded", function() {
+        loadTemplates();
+        loadSnippets();
+        loadShortcuts();
+        setupShortcutInputs();
+        adjustNameFontSize();
+    });
+
+    function adjustNameFontSize() {
+        const nameEl = document.querySelector('.profile-name');
+        if (!nameEl) return;
+        nameEl.style.whiteSpace = 'nowrap';
+        let fontSize = 36; // Increased initial font size
+        nameEl.style.fontSize = fontSize + 'px';
+        while (nameEl.scrollWidth > 330 && fontSize > 12) {
+            fontSize--;
+            nameEl.style.fontSize = fontSize + 'px';
+        }
+    }
+
+    async function loadTemplates() {
+        try {
+            const res = await fetch('/api/templates/');
+            const data = await res.json();
+            if (data.templates) {
+                templates = data.templates;
+                renderTemplateList();
+            }
+        } catch (e) {
+            console.error("Failed to load templates", e);
+        }
+    }
+
+    function renderTemplateList() {
+        const list = document.getElementById('templateList');
+        list.innerHTML = '';
+        if (templates.length === 0) {
+            list.innerHTML = '<li style="padding: 15px; color: #6b7280; text-align: center; font-size: 13px;">Bạn chưa có template nào.</li>';
+            return;
+        }
+        templates.forEach((t, index) => {
+            const li = document.createElement('li');
+            li.className = 'template-item';
+            li.innerHTML = `<span>${t.name}</span> <span class="lang-badge">${t.language}</span>`;
+            li.onclick = () => editTemplate(index, li);
+            list.appendChild(li);
+        });
+    }
+
+    function createNewTemplate() {
+        document.querySelectorAll('#templateList .template-item').forEach(el => el.classList.remove('active'));
+        document.getElementById('templateEditCol').style.display = 'flex';
+        document.getElementById('tplId').value = '';
+        document.getElementById('tplName').value = '';
+        document.getElementById('tplLang').value = 'all';
+        document.getElementById('tplCode').value = '';
+        document.getElementById('btnDelTpl').style.display = 'none';
+        document.getElementById('tplName').focus();
+    }
+
+    function editTemplate(index, element) {
+        document.querySelectorAll('#templateList .template-item').forEach(el => el.classList.remove('active'));
+        element.classList.add('active');
+        
+        const t = templates[index];
+        document.getElementById('templateEditCol').style.display = 'flex';
+        document.getElementById('tplId').value = t.id;
+        document.getElementById('tplName').value = t.name;
+        document.getElementById('tplLang').value = t.language;
+        document.getElementById('tplCode').value = t.code;
+        document.getElementById('btnDelTpl').style.display = 'block';
+    }
+
+    async function saveTemplate() {
+        const id = document.getElementById('tplId').value;
+        const name = document.getElementById('tplName').value.trim();
+        const lang = document.getElementById('tplLang').value;
+        const code = document.getElementById('tplCode').value.trim();
+        
+        if (!name || !code) {
+            alert("Vui lòng nhập tên và nội dung template.");
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/templates/', {
+                method: id ? 'PUT' : 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: id ? parseInt(id) : null, name: name, language: lang, code: code })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert("Đã lưu template thành công!");
+                loadTemplates();
+            } else {
+                alert("Lỗi: " + data.error);
+            }
+        } catch (e) {
+            alert("Lỗi kết nối.");
+        }
+    }
+
+    async function deleteTemplate() {
+        const id = document.getElementById('tplId').value;
+        if (!id) return;
+        
+        if (!confirm("Bạn có chắc chắn muốn xóa template này?")) return;
+
+        try {
+            const res = await fetch('/api/templates/', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: parseInt(id) })
+            });
+            const data = await res.json();
+            if (data.success) {
+                document.getElementById('templateEditCol').style.display = 'none';
+                loadTemplates();
+            } else {
+                alert("Lỗi: " + data.error);
+            }
+        } catch (e) {
+            alert("Lỗi kết nối.");
+        }
+    }
+
+    // --- TABS LOGIC REMOVED ---
+
+    // --- SNIPPETS LOGIC ---
+    let snippets = [];
+    
+    async function loadSnippets() {
+        try {
+            const res = await fetch('/api/snippets/');
+            const data = await res.json();
+            if (data.snippets) {
+                snippets = data.snippets;
+                renderSnippetList();
+            }
+        } catch (e) {
+            console.error("Failed to load snippets", e);
+        }
+    }
+
+    function renderSnippetList() {
+        const list = document.getElementById('snippetList');
+        list.innerHTML = '';
+        if (snippets.length === 0) {
+            list.innerHTML = '<li style="padding: 15px; color: #6b7280; text-align: center; font-size: 13px;">Bạn chưa có snippet nào.</li>';
+            return;
+        }
+        snippets.forEach((s, index) => {
+            const li = document.createElement('li');
+            li.className = 'template-item';
+            li.innerHTML = `<span>${s.title}</span> <span class="lang-badge" style="background:${s.is_public ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)'}; color:${s.is_public ? '#10b981' : '#ef4444'};">${s.is_public ? 'Công khai' : 'Riêng tư'}</span>`;
+            li.onclick = () => editSnippet(index, li);
+            list.appendChild(li);
+        });
+    }
+
+    function editSnippet(index, element) {
+        document.querySelectorAll('#snippetList .template-item').forEach(el => el.classList.remove('active'));
+        element.classList.add('active');
+        
+        const s = snippets[index];
+        document.getElementById('snippetEditCol').style.display = 'flex';
+        document.getElementById('snpHashId').value = s.hash_id;
+        document.getElementById('snpTitle').value = s.title;
+        document.getElementById('snpLang').value = s.language;
+        document.getElementById('snpPublic').checked = s.is_public;
+    }
+
+    async function saveSnippetMeta() {
+        const hashId = document.getElementById('snpHashId').value;
+        const title = document.getElementById('snpTitle').value.trim();
+        const isPublic = document.getElementById('snpPublic').checked;
+        
+        if (!hashId) return;
+
+        try {
+            const res = await fetch('/api/snippets/', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ hash_id: hashId, title: title, is_public: isPublic })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert("Đã lưu thông tin Snippet thành công!");
+                loadSnippets();
+            } else {
+                alert("Lỗi: " + data.error);
+            }
+        } catch (e) {
+            alert("Lỗi kết nối.");
+        }
+    }
+
+    async function deleteSnippet() {
+        const hashId = document.getElementById('snpHashId').value;
+        if (!hashId) return;
+        
+        if (!confirm("Bạn có chắc chắn muốn xóa Snippet này vĩnh viễn?")) return;
+
+        try {
+            const res = await fetch('/api/snippets/', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ hash_id: hashId })
+            });
+            const data = await res.json();
+            if (data.success) {
+                document.getElementById('snippetEditCol').style.display = 'none';
+                loadSnippets();
+            } else {
+                alert("Lỗi: " + data.error);
+            }
+        } catch (e) {
+            alert("Lỗi kết nối.");
+        }
+    }
+
+    function openSnippetCompiler() {
+        const hashId = document.getElementById('snpHashId').value;
+        if (hashId) {
+            window.location.href = `/?snippet=${hashId}`;
+        }
+    }
+
+    function openSnippetPreview() {
+        const hashId = document.getElementById('snpHashId').value;
+        if (hashId) {
+            window.open(`/s/${hashId}/`, '_blank');
+        }
+    }
+
+    // --- SHORTCUTS LOGIC ---
+    function loadShortcuts() {
+        const scRunCode = localStorage.getItem('sc_runCode');
+        const scNextStep = localStorage.getItem('sc_nextStep');
+        const scPrevStep = localStorage.getItem('sc_prevStep');
+        const scOpenTemplate = localStorage.getItem('sc_openTemplate');
+        
+        if (document.getElementById('keyRunCode')) {
+            document.getElementById('keyRunCode').value = scRunCode || 'Ctrl+Enter';
+            document.getElementById('keyNextStep').value = scNextStep || 'Ctrl+ArrowRight';
+            document.getElementById('keyPrevStep').value = scPrevStep || 'Ctrl+ArrowLeft';
+            document.getElementById('keyOpenTemplate').value = scOpenTemplate || 'Alt+J';
+        }
+    }
+
+    function resetKey(inputId, defaultKey) {
+        document.getElementById(inputId).value = defaultKey;
+    }
+
+    function saveShortcuts() {
+        localStorage.setItem('sc_runCode', document.getElementById('keyRunCode').value);
+        localStorage.setItem('sc_nextStep', document.getElementById('keyNextStep').value);
+        localStorage.setItem('sc_prevStep', document.getElementById('keyPrevStep').value);
+        localStorage.setItem('sc_openTemplate', document.getElementById('keyOpenTemplate').value);
+        alert("Đã lưu phím tắt thành công!");
+    }
+
+    function setupShortcutInputs() {
+        document.querySelectorAll('.shortcut-input-wrap input').forEach(input => {
+            input.addEventListener('keydown', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                if (e.key === 'Tab' || e.key === 'Escape' || e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Meta') {
+                    return; // Ignore modifiers alone
+                }
+                
+                if (e.key === 'Backspace' || e.key === 'Delete') {
+                    this.value = '';
+                    return;
+                }
+                
+                let keys = [];
+                if (e.ctrlKey) keys.push('Ctrl');
+                if (e.altKey) keys.push('Alt');
+                if (e.shiftKey) keys.push('Shift');
+                if (e.metaKey) keys.push('Meta');
+                
+                let keyName = e.key;
+                if (keyName === ' ') keyName = 'Space';
+                if (keyName.length === 1) keyName = keyName.toUpperCase();
+                
+                if (!keys.includes(keyName)) {
+                    keys.push(keyName);
+                }
+                
+                this.value = keys.join('+');
+            });
+        });
+    }
+</script>
+{% endblock %}

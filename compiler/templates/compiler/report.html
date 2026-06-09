@@ -1,0 +1,41 @@
+{% extends 'compiler/base.html' %}
+{% load static %}
+
+{% block title %}Report Bug - Unicorns Code Visualizer{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'compiler/css/auth.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="login-container" style="position: relative;">
+        <h2>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 8px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+            Báo cáo lỗi
+        </h2>
+        
+        <form action="#" method="POST" onsubmit="alert('Cảm ơn bạn! Lỗi đã được ghi nhận.'); window.location.href='index.html'; return false;">
+            <div class="form-group">
+                <label for="name">Tên / Email liên hệ (Tùy chọn)</label>
+                <input type="text" id="name" placeholder="Để lại info để Unicorns Team liên hệ lại...">
+            </div>
+            
+            <div class="form-group">
+                <label for="bug-title">Tiêu đề lỗi *</label>
+                <input type="text" id="bug-title" required placeholder="VD: Bảng Visualizer không hiện biến...">
+            </div>
+            
+            <div class="form-group">
+                <label for="bug-desc">Mô tả chi tiết *</label>
+                <textarea id="bug-desc" required placeholder="Bạn đã thao tác như thế nào trước khi gặp lỗi? Code bạn chạy là gì?"></textarea>
+            </div>
+            
+            <button type="submit" class="btn-login" style="margin-top: 15px; background: #ef4444;">Gửi báo cáo</button>
+            
+            <div style="text-align: center; margin-top: 20px; font-size: 14px;">
+                <a href="index.html" style="color: var(--text-muted); text-decoration: none;">← Quay lại trang chủ</a>
+            </div>
+        </form>
+    </div>
+{% endblock %}
+{% block footer %}{% endblock %}
