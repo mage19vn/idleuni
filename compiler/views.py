@@ -488,7 +488,7 @@ def view_snippet(request, hash_id):
         class DummySnippet:
             def __init__(self, hid):
                 self.hash_id = hid
-                self.language = "cpp"
+                self.language = "htnt"
                 self.created_at = datetime(2008, 4, 12, 0, 0, 0)
                 self.author = None
                 self.title = "Code Private / Not Found"
