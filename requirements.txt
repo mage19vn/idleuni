@@ -3,3 +3,8 @@ django-cors-headers
 whitenoise
 gunicorn
 psycopg2-binary
+
+libclang
+
+celery
+redis

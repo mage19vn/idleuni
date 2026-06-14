@@ -568,39 +568,24 @@ function setupTrace(traceData, fullOutput) {
     initializeDebugMenu(globalTraceData);
 
     if (globalTraceData.length > 0) {
-        if (!isVisualizerVisible) currentStepIndex = globalTraceData.length - 1;
-        else currentStepIndex = 0;
-        renderStep(currentStepIndex);
-    } else {
-        updateArrowPosition();
-        printToConsole(globalOutput);
-    }
-
-    if(runBtn) runBtn.disabled = false;
-    initializeDebugMenu(globalTraceData);
-
-    if (globalTraceData.length > 0) {
-        // --- THÊM PHẦN NÀY ---
         if (timeSlider) {
             timeSlider.max = globalTraceData.length - 1;
             timeSlider.disabled = false;
         }
-        // ---------------------
 
         if (!isVisualizerVisible) currentStepIndex = globalTraceData.length - 1;
         else currentStepIndex = 0;
         renderStep(currentStepIndex);
     } else {
-        // --- THÊM PHẦN NÀY ---
         if (timeSlider) {
             timeSlider.max = 0;
             timeSlider.value = 0;
             timeSlider.disabled = true;
         }
         if (stepCounter) stepCounter.innerText = "0/0";
-        // ---------------------
         
         updateArrowPosition();
+        if(consoleOutput) consoleOutput.innerHTML = '';
         printToConsole(globalOutput);
     }
 }
@@ -793,10 +778,38 @@ async function runCode() {
         };
 
         const response = await fetch('/api/visualize/', fetchOptions);
-
         if (!response.ok) throw new Error(`Server trả về lỗi: ${response.status}`);
+        const initResult = await response.json();
+        
+        if (initResult.error) {
+            throw new Error(initResult.error);
+        }
 
-        const result = await response.json();
+        let result = null;
+        if (initResult.status === "SUCCESS") {
+            result = initResult.result;
+        } else {
+            const taskId = initResult.task_id;
+            printToConsole("Đang xếp hàng đợi Server xử lý...", "system");
+
+            // Polling loop
+            while (true) {
+                await new Promise(r => setTimeout(r, 500)); // wait 500ms
+                const statusRes = await fetch(`/api/task_status/${taskId}/`);
+                if (!statusRes.ok) throw new Error(`Status lỗi: ${statusRes.status}`);
+                
+                const statusData = await statusRes.json();
+                if (statusData.status === "SUCCESS") {
+                    result = statusData.result;
+                    break;
+                } else if (statusData.status === "FAILURE") {
+                    throw new Error(statusData.error || "Lỗi khi chạy code (Worker Failure)");
+                }
+                // If PENDING or running, continue loop
+            }
+        }
+
+        if(consoleOutput) consoleOutput.innerHTML = '';
 
         if (result.time_ms !== undefined) {
             document.getElementById('timeMetric').innerText = result.time_ms.toFixed(2);
