@@ -8,11 +8,11 @@ function initReviewEditor(codeContent, snippetLang) {
     require(['vs/editor/editor.main'], function() {
         monaco.editor.defineTheme('unicorns-dark', {
             base: 'vs-dark', inherit: true, rules: [],
-            colors: { 'editor.background': '#1e1e2e', 'editorLineNumber.foreground': '#4b5263' }
+            colors: { 'editor.background': '#181926', 'editorLineNumber.foreground': '#475569' }
         });
         monaco.editor.defineTheme('unicorns-light', {
             base: 'vs', inherit: true, rules: [],
-            colors: { 'editor.background': '#ffffff', 'editorLineNumber.foreground': '#adb5bd' }
+            colors: { 'editor.background': '#f3f0ea', 'editorLineNumber.foreground': '#94a3b8' }
         });
 
         const isDark = document.body.classList.contains('dark-theme');

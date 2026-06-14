@@ -14,7 +14,7 @@
     <!-- Breadcrumb Header -->
     <div class="dash-header">
         <div class="dash-title">
-            <a href="{% url 'index' %}" class="logo" style="text-decoration: none; color: inherit;"><span>[ / ]</span> Unicorns Compiler</a>
+            <a href="{% url 'index' %}" class="logo text-decoration-none text-inherit"><span>[ / ]</span> Unicorns Compiler</a>
         </div>
         <div class="dash-actions">
             <a href="{% url 'index' %}">← Trang chủ</a>
@@ -29,7 +29,7 @@
         <div class="dash-sidebar">
             <div class="profile-name">{% if user.first_name %}{{ user.first_name }} {{ user.last_name }}{% else %}{{ user.username }}{% endif %}</div>
             <div class="profile-desc">Hồ sơ — chuyên môn và cấu hình hệ thống.</div>
-            <a href="{% url 'password_change' %}" class="btn-reset-pw" style="margin-top: 15px;">Đặt lại mật khẩu</a>
+            <a href="{% url 'password_change' %}" class="btn-reset-pw mt-3">Đặt lại mật khẩu</a>
         </div>
 
         <!-- Content Area -->
@@ -39,7 +39,7 @@
             <div id="content-account">
                 {% if messages %}
                     {% for message in messages %}
-                        <div style="background: rgba(16,185,129,0.1); color: #10b981; border: 1px solid rgba(16,185,129,0.2); padding: 12px 15px; border-radius: 8px; margin-bottom: 25px; font-size: 13px; font-weight: bold;">{{ message }}</div>
+                        <div class="alert-success">{{ message }}</div>
                     {% endfor %}
                 {% endif %}
 
@@ -131,7 +131,7 @@
                                 </div>
                             </div>
                             <div class="data-row" style="align-items: flex-start;">
-                                <div class="data-label" style="padding-top: 6px;">Tiểu sử (Bio)</div>
+                                <div class="data-label pt-1">Tiểu sử (Bio)</div>
                                 <div class="data-value">
                                     {{ p_form.bio }}
                                     {% for error in p_form.bio.errors %}<div class="error-text">{{ error }}</div>{% endfor %}
@@ -158,14 +158,14 @@
                             </ul>
                             <button class="template-add-btn" onclick="createNewTemplate()">+ Thêm Template mới</button>
                         </div>
-                        <div class="template-edit-col" id="templateEditCol" style="display: none;">
-                            <input type="hidden" id="tplId">
-                            <div style="display: flex; gap: 10px;">
-                                <div class="form-group" style="flex: 1;">
+                        <div class="template-edit-col d-none" id="templateEditCol">
+                            
+                            <div class="flex-row gap-sm">
+                                <div class="form-group flex-1">
                                     <label>Tên gọi tắt (vd: body)</label>
                                     <input type="text" id="tplName" placeholder="Tên snippet...">
                                 </div>
-                                <div class="form-group" style="flex: 1;">
+                                <div class="form-group flex-1">
                                     <label>Ngôn ngữ</label>
                                     <select id="tplLang">
                                         <option value="all">Tất cả</option>
@@ -174,13 +174,13 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="form-group" style="flex: 1; display: flex; flex-direction: column;">
-                                <label>Nội dung Code (Dùng $1, $2 làm tab stop)</label>
-                                <textarea id="tplCode" style="flex: 1; white-space: pre;"></textarea>
+                            <div class="form-group flex-1 flex-col">
+                                <label for="tplCode">Code mặc định *</label>
+                                <textarea id="tplCode" class="flex-1 white-space-pre"></textarea>
                             </div>
                             <div class="template-actions">
                                 <button class="btn-save-tpl" onclick="saveTemplate()">Lưu Template</button>
-                                <button class="btn-del-tpl" id="btnDelTpl" onclick="deleteTemplate()" style="display: none;">Xóa</button>
+                                <button class="btn-del-tpl d-none" id="btnDelTpl" onclick="deleteTemplate()">Xóa</button>
                             </div>
                         </div>
                     </div>
@@ -202,24 +202,24 @@
                                 <!-- Danh sách snippet nạp bằng JS -->
                             </ul>
                         </div>
-                        <div class="template-edit-col" id="snippetEditCol" style="display: none; justify-content: center;">
+                        <div class="template-edit-col d-none justify-center" id="snippetEditCol">
                             <input type="hidden" id="snpHashId">
                             <div class="form-group">
                                 <label>Tên Snippet</label>
                                 <input type="text" id="snpTitle" placeholder="Tên snippet...">
                             </div>
                             <div class="form-group">
-                                <label>Ngôn ngữ</label>
-                                <input type="text" id="snpLang" disabled style="cursor: not-allowed; opacity: 0.5;">
+                                <label for="snpLang">Ngôn ngữ</label>
+                                <input type="text" id="snpLang" disabled class="cursor-not-allowed opacity-50">
                             </div>
-                            <div class="form-group" style="display: flex; align-items: center; gap: 10px; margin-top: 10px;">
-                                <input type="checkbox" id="snpPublic" style="width: auto; height: auto;">
-                                <label for="snpPublic" style="margin: 0; cursor: pointer; color: var(--text-main); font-size: 13px;">Công khai (Ai có link cũng xem được)</label>
+                            <div class="form-group flex-row align-center gap-sm mt-2">
+                                <input type="checkbox" id="snpPublic" class="w-auto h-auto">
+                                <label for="snpPublic" class="m-0 cursor-pointer text-main fs-sm">Công khai (Ai có link cũng xem được)</label>
                             </div>
-                            <div class="template-actions" style="margin-top: 25px;">
+                            <div class="template-actions mt-4">
                                 <button class="btn-save-tpl" onclick="saveSnippetMeta()">Lưu</button>
-                                <button class="btn-save-tpl" style="background: #10b981;" onclick="openSnippetCompiler()">Mở Editor</button>
-                                <button class="btn-save-tpl" style="background: #0ea5e9;" onclick="openSnippetPreview()">Preview</button>
+                                <button class="btn-save-tpl bg-success" onclick="openSnippetCompiler()">Mở Editor</button>
+                                <button class="btn-save-tpl bg-info" onclick="openSnippetPreview()">Preview</button>
                                 <button class="btn-del-tpl" id="btnDelSnp" onclick="deleteSnippet()">Xóa</button>
                             </div>
                         </div>
@@ -318,7 +318,7 @@
         const list = document.getElementById('templateList');
         list.innerHTML = '';
         if (templates.length === 0) {
-            list.innerHTML = '<li style="padding: 15px; color: #6b7280; text-align: center; font-size: 13px;">Bạn chưa có template nào.</li>';
+            list.innerHTML = '<li class="empty-list-item">Bạn chưa có template nào.</li>';
             return;
         }
         templates.forEach((t, index) => {
@@ -429,13 +429,13 @@
         const list = document.getElementById('snippetList');
         list.innerHTML = '';
         if (snippets.length === 0) {
-            list.innerHTML = '<li style="padding: 15px; color: #6b7280; text-align: center; font-size: 13px;">Bạn chưa có snippet nào.</li>';
+            list.innerHTML = '<li class="empty-list-item">Bạn chưa có snippet nào.</li>';
             return;
         }
         snippets.forEach((s, index) => {
             const li = document.createElement('li');
             li.className = 'template-item';
-            li.innerHTML = `<span>${s.title}</span> <span class="lang-badge" style="background:${s.is_public ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)'}; color:${s.is_public ? '#10b981' : '#ef4444'};">${s.is_public ? 'Công khai' : 'Riêng tư'}</span>`;
+            li.innerHTML = `<span>${s.title}</span> <span class="lang-badge ${s.is_public ? 'bg-success' : 'bg-danger'}">${s.is_public ? 'Công khai' : 'Riêng tư'}</span>`;
             li.onclick = () => editSnippet(index, li);
             list.appendChild(li);
         });

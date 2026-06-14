@@ -14,7 +14,7 @@ echo 3. Dang build lai image (uniidle)...
 docker build -t uniidle .
 
 echo 4. Dang chay lai container voi code moi nhat...
-docker run -d -p 8000:8000 -v "%cd%":/app --name unicorns_app uniidle
+docker run -d -p 8000:8000 -e DB_HOST=host.docker.internal -v "%cd%":/app --name unicorns_app uniidle
 
 echo.
 echo =======================================================

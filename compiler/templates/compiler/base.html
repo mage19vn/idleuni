@@ -5,17 +5,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Unicorns Compiler{% endblock %}</title>
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23ffffff'/><text x='50%' y='50%' dominant-baseline='central' text-anchor='middle' font-family='Consolas, monospace' font-weight='bold' font-size='45' fill='%23d9534f'>[/]</text></svg>">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23ffffff'/><text x='50%' y='50%' dominant-baseline='central' text-anchor='middle' font-family='Consolas, monospace' font-weight='bold' font-size='45' fill='%232563eb'>[/]</text></svg>">
     
-    <!-- Fonts: Inter (UI) & Fira Code (Code) -->
+    <!-- Fonts: Geist (UI) & Fira Code (Code) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Geist:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Icons: Phosphor Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
-    <link rel="stylesheet" href="{% static 'compiler/css/style.css' %}?v=1780623281">
+    <link rel="stylesheet" href="{% static 'compiler/css/style.css' %}?v=20260614">
     {% block extra_css %}{% endblock %}
     {% block extra_head %}{% endblock %}
     <script>
@@ -33,48 +33,15 @@
         localStorage.setItem('editor_font_size', '{{ user.profile.editor_font_size }}');
     </script>
     {% endif %}
-    <script src="{% static 'compiler/js/common.js' %}?v=1780623281"></script>
+    <script src="{% static 'compiler/js/common.js' %}?v=20260614"></script>
 
     {% block content %}
     {% endblock %}
 
-    <!-- Spy Modal (Global) -->
-    <div id="spyModal" class="modal-overlay spy-overlay">
-        <div class="spy-modal">
-            <div class="spy-icon"><i class="ph-bold ph-siren" style="color: #dc3545;"></i></div>
-            <h3 class="spy-title">CẢNH BÁO GIÁN ĐIỆP!</h3>
-            <p class="spy-text">
-                Hệ thống phát hiện hành vi khả nghi (chuyển tab, mở F12, hoặc gian lận).<br>
-                <b>Mọi hoạt động của bạn đã được ghi nhận!</b>
-            </p>
-            <div class="spy-actions">
-                <button onclick="closeSpyModal()" class="btn-spy-close">Tôi đã hiểu, xin lỗi! 🫡</button>
-            </div>
-        </div>
-    </div>
+    {% include 'compiler/components/global_modals.html' %}
 
     {% block footer %}
-    
-    <!-- Custom Context Menu -->
-    <div id="customContextMenu" class="custom-context-menu">
-        <ul class="context-menu-list">
-            {% if user.is_authenticated %}
-            <li class="context-menu-item" onclick="handleContextMenuAction('profile', '{% url 'profile' %}')">
-                <span class="context-menu-icon"><i class="ph-bold ph-user"></i></span> Hồ sơ của tôi
-            </li>
-            {% endif %}
-            <li class="context-menu-item" onclick="handleContextMenuAction('settings')">
-                <span class="context-menu-icon"><i class="ph-bold ph-gear"></i></span> Cài đặt giao diện
-            </li>
-        </ul>
-    </div>
-
-    <footer>
-        <div class="footer-content">
-            <span>© 2026 Unicorns Code Visualizer. All rights reserved.</span>
-            <span>Made with <i class="ph-fill ph-heart" style="color: #ef4444;"></i> by Unicorns Team | <strong>Coded by Mage__</strong></span>
-        </div>
-    </footer>
+        {% include 'compiler/components/footer.html' %}
     {% endblock %}
 
     {% block extra_js %}{% endblock %}

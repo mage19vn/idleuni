@@ -14,33 +14,33 @@
 {% block content %}
 
     <div class="header">
-        <a href="{% url 'index' %}" class="logo" style="text-decoration: none; color: inherit;"><span>[ / ]</span> Unicorns Compiler</a>
+        <a href="{% url 'index' %}" class="logo text-decoration-none text-inherit"><span>[ / ]</span> Unicorns Compiler</a>
         <div class="controls">
-            <span style="color: var(--text-muted); margin-right: 15px;">Snippet ID: <strong>{{ snippet.hash_id }}</strong></span>
+            <span class="text-muted mr-3">Snippet ID: <strong>{{ snippet.hash_id }}</strong></span>
             
             <a href="/?snippet={{ snippet.hash_id }}" class="btn-edit-snippet"><i class="ph-bold ph-pencil-simple"></i> Đưa vào edit</a>
             {% if user.is_authenticated %}
-            <button onclick="saveToPersonalSnippet()" class="btn-save-snippet" style="margin-left: 10px;"><i class="ph-bold ph-floppy-disk"></i> Lưu về Snippet cá nhân</button>
+            <button onclick="saveToPersonalSnippet()" class="btn-save-snippet ml-2"><i class="ph-bold ph-floppy-disk"></i> Lưu về Snippet cá nhân</button>
             {% endif %}
 
             <div class="control-divider"></div>
 
-            {% if user.is_authenticated %}
-            <div class="user-dropdown" style="position: relative; margin-left: 10px;">
-                <button style="display: flex; align-items: center; gap: 5px; font-weight: bold; color: var(--text-accent); padding: 6px 12px; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; background: var(--bg-panel);" onclick="document.getElementById('userMenu').classList.toggle('show')">
-                    <i class="ph-bold ph-user"></i> {{ user.username }} ▾
-                </button>
-                <div id="userMenu" class="dropdown-content" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 5px; background: var(--bg-panel); min-width: 150px; border: 1px solid var(--border); border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); z-index: 1000; overflow: hidden;">
-                    <a href="{% url 'profile' %}" style="display: block; padding: 10px 15px; color: var(--text-main); text-decoration: none; border-bottom: 1px solid var(--border); transition: background 0.2s;">Hồ sơ</a>
-                    <form action="{% url 'logout' %}" method="post" style="margin: 0;">
-                        {% csrf_token %}
-                        <button type="submit" style="width: 100%; text-align: left; padding: 10px 15px; background: none; border: none; color: #ff4d4f; cursor: pointer; font-size: 14px; font-family: inherit; transition: background 0.2s;">Đăng xuất</button>
-                    </form>
-                </div>
+        {% if user.is_authenticated %}
+        <div class="user-dropdown position-relative ml-2">
+            <button class="user-btn-toggle" onclick="document.getElementById('userMenu').classList.toggle('show')">
+                <i class="ph-bold ph-user"></i> {{ user.username }} ▾
+            </button>
+            <div id="userMenu" class="dropdown-content user-menu-dropdown">
+                <a href="{% url 'profile' %}" class="user-menu-item">Hồ sơ</a>
+                <form action="{% url 'logout' %}" method="post" class="m-0">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-logout">Đăng xuất</button>
+                </form>
             </div>
-            {% else %}
-            <a href="{% url 'login' %}" style="color: var(--text-main); margin-left: 10px; text-decoration: none;">Đăng nhập</a>
-            {% endif %}
+        </div>
+        {% else %}
+            <a href="{% url 'login' %}" class="text-main ml-2 text-decoration-none">Đăng nhập</a>
+        {% endif %}
         </div>
     </div>
 
@@ -53,16 +53,16 @@
 
         <div class="pane-right" id="rightPane">
             <div class="meta-info">
-                <div style="font-size: 16px; margin-bottom: 5px; color: var(--text-accent);">Tên Snippet: <strong>{{ snippet.title|default:"Không tên" }}</strong></div>
+                <div class="fs-md mb-2 text-accent">Tên Snippet: <strong>{{ snippet.title|default:"Không tên" }}</strong></div>
                 <div>Ngôn ngữ: <strong>{{ snippet.language|upper }}</strong></div>
                 <div>Ngày tạo: <strong>{{ snippet.created_at|date:"d/m/Y H:i" }}</strong></div>
                 <div>Tác giả: <strong>{% if snippet.author %}{{ snippet.author.username }}{% else %}Ẩn danh{% endif %}</strong></div>
-                <div style="margin-top: 5px;">
-                    Chế độ: 
+                <div class="mt-2">
+                    <span class="text-muted">Trạng thái: </span>
                     {% if snippet.is_public %}
-                        <strong style="color: #28a745;">Công khai</strong>
+                        <strong class="text-success">Công khai</strong>
                     {% else %}
-                        <strong style="color: #dc3545;">Riêng tư</strong>
+                        <strong class="text-danger">Riêng tư</strong>
                     {% endif %}
                 </div>
             </div>
@@ -72,10 +72,9 @@
                 <div class="io-content-box">{% if snippet.input_text %}{{ snippet.input_text }}{% else %}<i>(Không có)</i>{% endif %}</div>
             </div>
             
-            <div class="io-section" style="margin-top: auto; padding-top: 20px; border-top: 1px dashed var(--border);">
-                <p style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">
-                    Bạn đang xem mã nguồn ở chế độ chỉ đọc (read-only).<br>
-                    Để chạy hoặc chỉnh sửa, hãy nhấn <b>Đưa vào edit</b>.
+            <div class="io-section mt-auto pt-3 border-top-dashed">
+                <p class="fs-sm text-muted m-0">
+                    Bạn đang ở chế độ xem lại (Review Mode). Bạn có thể sao chép đoạn code này hoặc lưu vào kho cá nhân của mình để biên dịch/chạy.
                 </p>
             </div>
         </div>

@@ -1,0 +1,28 @@
+<!-- Spy Modal (Global) -->
+<div id="spyModal" class="modal-overlay spy-overlay">
+    <div class="spy-modal">
+        <div class="spy-icon"><i class="ph-bold ph-siren text-accent"></i></div>
+        <h3 class="spy-title">CẢNH BÁO GIÁN ĐIỆP!</h3>
+        <p class="spy-text">
+            Hệ thống phát hiện hành vi khả nghi (chuyển tab, mở F12, hoặc gian lận).<br>
+            <b>Mọi hoạt động của bạn đã được ghi nhận!</b>
+        </p>
+        <div class="spy-actions">
+            <button onclick="closeSpyModal()" class="btn-spy-close">Tôi đã hiểu, xin lỗi! 🫡</button>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Context Menu -->
+<div id="customContextMenu" class="custom-context-menu">
+    <ul class="context-menu-list">
+        {% if user.is_authenticated %}
+        <li class="context-menu-item" onclick="handleContextMenuAction('profile', '{% url 'profile' %}')">
+            <span class="context-menu-icon"><i class="ph-bold ph-user"></i></span> Hồ sơ của tôi
+        </li>
+        {% endif %}
+        <li class="context-menu-item" onclick="handleContextMenuAction('settings')">
+            <span class="context-menu-icon"><i class="ph-bold ph-gear"></i></span> Cài đặt giao diện
+        </li>
+    </ul>
+</div>

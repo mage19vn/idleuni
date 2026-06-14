@@ -28,7 +28,7 @@ docker build -t uniidle .
 
 echo "4. Dang chay lai container voi code moi nhat..."
 # Thay %cd% bằng $(pwd)
-docker run -d -p 8000:8000 -v "$(pwd):/app" --name unicorns_app uniidle
+docker run -d -p 8000:8000 -e DB_HOST=host.docker.internal -v "$(pwd):/app" --name unicorns_app uniidle
 
 echo ""
 echo "======================================================="

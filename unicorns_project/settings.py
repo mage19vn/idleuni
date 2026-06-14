@@ -81,8 +81,12 @@ WSGI_APPLICATION = 'unicorns_project.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'unicorns_project',
+        'USER': 'postgres',
+        'PASSWORD': 'lam190808',
+        'HOST': os.environ.get('DB_HOST', 'localhost'),
+        'PORT': '5432',
     }
 }
 

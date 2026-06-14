@@ -1,0 +1,45 @@
+<div class="header">
+    <a href="{% url 'index' %}" class="logo text-decoration-none"><span>[ / ]</span> Unicorns Compiler</a>
+    <div class="controls">
+        <input type="file" id="fileInput" class="d-none" accept=".py,.cpp,.txt,.c">
+        <button class="btn-icon" onclick="saveSnippet()" title="Lưu code lên hệ thống"><i class="ph-bold ph-cloud-arrow-up"></i></button>
+
+        <div class="control-divider"></div>
+
+        <select id="langSelect" onchange="changeLanguage()" title="Chọn ngôn ngữ lập trình">
+            <option value="python" {% if user.is_authenticated and user.profile.default_language == 'python' %}selected{% endif %}>Python 3</option>
+            <option value="cpp" {% if user.is_authenticated and user.profile.default_language == 'cpp' %}selected{% endif %}>C++ (GDB)</option>
+        </select>
+
+        <div class="slider-container flex-row align-center gap-sm mx-2">
+            <input type="range" id="timeSlider" min="0" max="0" value="0" disabled title="Kéo để tua thời gian">
+            <span id="stepCounter" class="fs-sm fw-bold text-center text-muted" style="min-width: 45px;">0/0</span>
+        </div>
+        
+        <button id="prevBtn" onclick="prevStep()" disabled title="Lùi lại 1 bước (Ctrl + ←)"><i class="ph-bold ph-skip-back"></i></button>
+        <button id="nextBtn" onclick="nextStep()" disabled title="Tiếp tục 1 bước (Ctrl + →)"><i class="ph-bold ph-skip-forward"></i></button>
+        
+        <span id="loader"><span class="spinning"><i class="ph-bold ph-spinner"></i></span> Đang xử lý...</span>
+        <button id="runBtn" class="btn-run" onclick="runCode()" title="Biên dịch và chạy mô phỏng (Ctrl + Enter)"><i class="ph-bold ph-play"></i> Chạy Code</button>
+
+        <div class="control-divider"></div>
+
+        <button onclick="toggleDebug()" title="Cài đặt giao diện & hiển thị"><i class="ph-bold ph-gear"></i> Cài đặt</button>
+
+        {% if user.is_authenticated %}
+        <div class="control-divider"></div>
+        <div class="user-dropdown position-relative ml-2">
+            <button class="user-btn-toggle" onclick="document.getElementById('userMenu').classList.toggle('show')">
+                <i class="ph-bold ph-user"></i> {{ user.username }} ▾
+            </button>
+            <div id="userMenu" class="dropdown-content user-menu-dropdown">
+                <a href="{% url 'profile' %}" class="user-menu-item">Hồ sơ</a>
+                <form action="{% url 'logout' %}" method="post" class="m-0">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-logout">Đăng xuất</button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
