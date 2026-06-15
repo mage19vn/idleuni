@@ -218,7 +218,7 @@ body { background-color: var(--bg-base); color: var(--text-main); font-family: v
 /* --- MAIN LAYOUT --- */
 .workspace { display: flex; flex: 1; overflow: hidden; padding: 20px; gap: 20px; width: 100%; margin: 0; }
 .pane { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: var(--shadow-card); transition: all 0.3s ease; }
-.pane-left { flex: 5; display: flex; flex-direction: column; gap: 20px; background: transparent; border: none; box-shadow: none; }
+.pane-left { flex: 5; display: flex; flex-direction: column; gap: 0; background: transparent; border: none; box-shadow: none; }
 .pane-right { flex: 4; }
 
 .pane-header { padding: 12px 16px; font-size: 13px; font-weight: 700; color: var(--text-main); border-bottom: 1px solid var(--border); background: var(--bg-panel); letter-spacing: 0.2px; display: flex; align-items: center; gap: 8px; }
@@ -304,10 +304,8 @@ mark.search-match { background: rgba(255, 235, 59, 0.4); color: inherit; border-
 .suggest-text { flex: 1; }
 .suggest-match { color: #569cd6; font-weight: bold; }
 
-/* --- METRICS BAR --- */
-.metrics-bar { display: flex; gap: 20px; padding: 12px 30px 0 30px; background: transparent; border: none; font-size: 13px; color: var(--text-muted); justify-content: flex-end; }
-.metrics-bar span { display: flex; align-items: center; gap: 5px; }
-.metrics-value { font-weight: bold; color: var(--text-main); font-family: var(--font-code); }
+/* --- METRICS BAR (Moved to Header) --- */
+.header-metrics span { display: flex; align-items: center; gap: 4px; }
 
 /* --- ANIMATIONS CHO BIẾN --- */
 @keyframes popNew { 0% { opacity: 0; transform: translateY(10px) scale(0.8); } 70% { transform: translateY(-2px) scale(1.05); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
@@ -319,9 +317,26 @@ mark.search-match { background: rgba(255, 235, 59, 0.4); color: inherit; border-
 .btn-report { background: transparent; color: var(--text-accent); border: 1px solid var(--text-accent); padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; text-decoration: none; transition: 0.2s; }
 .btn-report:hover { background: var(--text-accent); color: #ffffff; }
 
-footer { background-color: var(--bg-panel); border-top: 1px solid var(--border); padding: 12px 24px; font-size: 13px; color: var(--text-muted); flex-shrink: 0; z-index: 10; }
-.footer-content { display: flex; justify-content: space-between; align-items: center; width: 100%; font-weight: 500; }
-.footer-content span:last-child { color: var(--text-main); }
+/* --- FOOTER WATERMARK --- */
+.footer-watermark {
+    position: fixed;
+    bottom: 15px;
+    right: 20px;
+    font-size: 11px;
+    color: var(--text-muted);
+    z-index: 1000;
+    pointer-events: none;
+    opacity: 0.5;
+    text-align: right;
+    user-select: none;
+    transition: opacity 0.3s ease;
+}
+.footer-watermark strong {
+    color: var(--text-main);
+}
+body.dark-theme .footer-watermark {
+    opacity: 0.3;
+}
 
 /* --- ĐIỀU CHỈNH MÀU CODE PRISM.JS CHO DARK MODE --- */
 body.dark-theme #highlightLayer code { 
@@ -483,6 +498,36 @@ body.dark-theme .token.builtin { color: #f9e2af !important; }
     background-color: var(--text-accent);
     height: 100%; 
     box-shadow: 0 0 8px var(--text-accent);
+}
+
+/* Thanh resizer nội bộ giữa Editor và IO */
+.resizer-internal {
+    display: flex;
+    width: 100%;
+    height: 20px;
+    cursor: row-resize;
+}
+.resizer-internal::after {
+    width: 40px;
+    height: 2px;
+}
+.resizer-internal:hover::after, .resizer-internal.resizer-active::after {
+    width: 100%;
+    height: 2px;
+}
+
+.workspace.hide-vis .resizer-internal {
+    width: 20px;
+    height: 100%;
+    cursor: col-resize;
+}
+.workspace.hide-vis .resizer-internal::after {
+    width: 2px;
+    height: 40px;
+}
+.workspace.hide-vis .resizer-internal:hover::after, .workspace.hide-vis .resizer-internal.resizer-active::after {
+    height: 100%;
+    width: 2px;
 }
 
 /* --- MOBILE TABS --- */

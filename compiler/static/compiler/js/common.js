@@ -164,6 +164,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Hệ thống chặn phím tắt DevTools (bắt ở capture phase trên Window để ưu tiên tuyệt đối)
     if (!window.isAdmin) {
         window.addEventListener('keydown', function(e) {
+            // Ưu tiên phím tắt của Code Editor (nếu trùng)
+            if (typeof checkShortcut === 'function' && typeof currentKeymap !== 'undefined') {
+                for (const val of Object.values(currentKeymap)) {
+                    if (checkShortcut(e, val)) {
+                        return; // Bypass anti-cheat
+                    }
+                }
+            }
+
             if (e.key === 'F12' || e.keyCode === 123) return showSpyModal(e);
             if (e.ctrlKey && e.shiftKey && ['I', 'J', 'C', 'i', 'j', 'c'].includes(e.key)) return showSpyModal(e);
             if (e.ctrlKey && (e.key === 'U' || e.key === 'u')) return showSpyModal(e);

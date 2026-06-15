@@ -14,7 +14,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
-from .models import Profile, CodeSnippet, CodeTemplate
+from .models import Profile, CodeSnippet, CodeTemplate, KeymapTemplate
 from .forms import ProfileUpdateForm
 from django.contrib import messages
 from datetime import datetime
@@ -573,4 +573,38 @@ def snippets_api(request):
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
 
+    return JsonResponse({"error": "Method not allowed"}, status=405)
+
+@csrf_exempt
+def save_keymap_api(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            keymap_data = data.get("keymap_data")
+            name = data.get("name", "Custom Keymap")
+
+            if not keymap_data:
+                return JsonResponse({"error": "Missing keymap_data"}, status=400)
+
+            keymap = KeymapTemplate()
+            keymap.hash_id = secrets.token_hex(4)
+            keymap.name = name
+            keymap.keymap_data = keymap_data
+            keymap.save()
+
+            return JsonResponse({"success": True, "hash_id": keymap.hash_id})
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+    return JsonResponse({"error": "Method not allowed"}, status=405)
+
+@csrf_exempt
+def load_keymap_api(request, hash_id):
+    if request.method == "GET":
+        try:
+            keymap = KeymapTemplate.objects.get(hash_id=hash_id)
+            return JsonResponse({"success": True, "keymap_data": keymap.keymap_data, "name": keymap.name})
+        except KeymapTemplate.DoesNotExist:
+            return JsonResponse({"error": "Không tìm thấy Keymap với mã này"}, status=404)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
     return JsonResponse({"error": "Method not allowed"}, status=405)

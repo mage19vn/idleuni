@@ -209,39 +209,37 @@
                 <div class="info-section">
                     <div class="info-header">
                         <div class="info-title">
-                            <h3>Cài đặt Phím tắt</h3>
-                            <span>Thiết lập tổ hợp phím (Lưu trên trình duyệt cục bộ)</span>
+                            <h3>Cài đặt Phím tắt (Keymap)</h3>
+                            <span>Thiết lập tổ hợp phím và đồng bộ đám mây</span>
                         </div>
-                        <button class="btn-edit" onclick="saveShortcuts()"><i class="ph-bold ph-floppy-disk"></i> Lưu cấu hình</button>
                     </div>
                     
-                    <div class="shortcut-grid">
-                        <div class="shortcut-card">
-                            <label>Chạy Code (Biên dịch & Chạy)</label>
-                            <div class="shortcut-input-wrap">
-                                <input type="text" id="keyRunCode" readonly placeholder="Bấm phím...">
-                                <button onclick="resetKey('keyRunCode', 'Ctrl+Enter')" title="Khôi phục mặc định">↺</button>
+                    <div style="padding: 20px;">
+                        <div style="margin-bottom: 20px;">
+                            <label style="font-weight: bold; font-size: 14px; margin-bottom: 8px; display: block; color: var(--text-main);">1. Chọn Template (Bản mẫu):</label>
+                            <select id="keymapTemplateSelect" onchange="changeKeymapTemplate()" style="width: 100%; max-width: 400px; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-io); color: var(--text-main); font-family: var(--font-main);">
+                                <option value="vscode">VS Code (Mặc định)</option>
+                                <option value="codeblocks">Code::Blocks</option>
+                                <option value="custom">Tùy chỉnh (Custom)</option>
+                            </select>
+                        </div>
+                        
+                        <div style="margin-bottom: 20px;">
+                            <label style="font-weight: bold; font-size: 14px; margin-bottom: 8px; display: block; color: var(--text-main);">2. Chỉnh sửa phím tắt:</label>
+                            <div id="keymapEditorList" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; max-width: 800px; border: 1px solid var(--border); padding: 20px; border-radius: 10px; background: var(--bg-io); box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);">
+                                <!-- JS sẽ render các ô input vào đây -->
                             </div>
                         </div>
-                        <div class="shortcut-card">
-                            <label>Tới Bước Tiếp Theo</label>
-                            <div class="shortcut-input-wrap">
-                                <input type="text" id="keyNextStep" readonly placeholder="Bấm phím...">
-                                <button onclick="resetKey('keyNextStep', 'Ctrl+ArrowRight')" title="Khôi phục mặc định">↺</button>
+
+                        <div style="border-top: 1px dashed var(--border); padding-top: 20px; max-width: 600px;">
+                            <label style="font-weight: bold; font-size: 14px; margin-bottom: 12px; display: block; color: var(--text-main);">3. Đồng bộ Đám mây (Hash ID):</label>
+                            <div style="display: flex; gap: 12px; margin-bottom: 12px;">
+                                <button class="setting-btn flex-1" onclick="saveKeymapToCloud()" style="background: var(--text-accent); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold;"><i class="ph-bold ph-cloud-arrow-up"></i> Tải lên đám mây</button>
+                                <input type="text" id="keymapHashDisplay" readonly placeholder="Mã Hash của bạn..." style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-main); font-size: 14px; text-align: center;">
                             </div>
-                        </div>
-                        <div class="shortcut-card">
-                            <label>Lùi Lại Bước Trạng Thái</label>
-                            <div class="shortcut-input-wrap">
-                                <input type="text" id="keyPrevStep" readonly placeholder="Bấm phím...">
-                                <button onclick="resetKey('keyPrevStep', 'Ctrl+ArrowLeft')" title="Khôi phục mặc định">↺</button>
-                            </div>
-                        </div>
-                        <div class="shortcut-card">
-                            <label>Mở Menu Template</label>
-                            <div class="shortcut-input-wrap">
-                                <input type="text" id="keyOpenTemplate" readonly placeholder="Bấm phím...">
-                                <button onclick="resetKey('keyOpenTemplate', 'Alt+J')" title="Khôi phục mặc định">↺</button>
+                            <div style="display: flex; gap: 12px;">
+                                <input type="text" id="keymapHashInput" placeholder="Nhập Hash tải về..." style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-main); font-size: 14px;">
+                                <button class="setting-btn" onclick="loadKeymapFromCloud()" style="padding: 10px; border-radius: 6px; cursor: pointer; border: 1px solid var(--border); background: var(--bg-surface); color: var(--text-main); font-weight: bold;"><i class="ph-bold ph-cloud-arrow-down"></i> Tải về</button>
                             </div>
                         </div>
                     </div>
@@ -255,14 +253,16 @@
 {% block footer %}{% endblock %}
 
 {% block extra_js %}
+<script src="{% static 'compiler/js/keymap.js' %}"></script>
 <script>
     let templates = [];
     
     document.addEventListener("DOMContentLoaded", function() {
         loadTemplates();
         loadSnippets();
-        loadShortcuts();
-        setupShortcutInputs();
+        if (typeof renderKeymapEditor === "function") {
+            renderKeymapEditor();
+        }
         adjustNameFontSize();
     });
 
@@ -493,65 +493,6 @@
         }
     }
 
-    // --- SHORTCUTS LOGIC ---
-    function loadShortcuts() {
-        const scRunCode = localStorage.getItem('sc_runCode');
-        const scNextStep = localStorage.getItem('sc_nextStep');
-        const scPrevStep = localStorage.getItem('sc_prevStep');
-        const scOpenTemplate = localStorage.getItem('sc_openTemplate');
-        
-        if (document.getElementById('keyRunCode')) {
-            document.getElementById('keyRunCode').value = scRunCode || 'Ctrl+Enter';
-            document.getElementById('keyNextStep').value = scNextStep || 'Ctrl+ArrowRight';
-            document.getElementById('keyPrevStep').value = scPrevStep || 'Ctrl+ArrowLeft';
-            document.getElementById('keyOpenTemplate').value = scOpenTemplate || 'Alt+J';
-        }
-    }
 
-    function resetKey(inputId, defaultKey) {
-        document.getElementById(inputId).value = defaultKey;
-    }
-
-    function saveShortcuts() {
-        localStorage.setItem('sc_runCode', document.getElementById('keyRunCode').value);
-        localStorage.setItem('sc_nextStep', document.getElementById('keyNextStep').value);
-        localStorage.setItem('sc_prevStep', document.getElementById('keyPrevStep').value);
-        localStorage.setItem('sc_openTemplate', document.getElementById('keyOpenTemplate').value);
-        alert("Đã lưu phím tắt thành công!");
-    }
-
-    function setupShortcutInputs() {
-        document.querySelectorAll('.shortcut-input-wrap input').forEach(input => {
-            input.addEventListener('keydown', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                if (e.key === 'Tab' || e.key === 'Escape' || e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Meta') {
-                    return; // Ignore modifiers alone
-                }
-                
-                if (e.key === 'Backspace' || e.key === 'Delete') {
-                    this.value = '';
-                    return;
-                }
-                
-                let keys = [];
-                if (e.ctrlKey) keys.push('Ctrl');
-                if (e.altKey) keys.push('Alt');
-                if (e.shiftKey) keys.push('Shift');
-                if (e.metaKey) keys.push('Meta');
-                
-                let keyName = e.key;
-                if (keyName === ' ') keyName = 'Space';
-                if (keyName.length === 1) keyName = keyName.toUpperCase();
-                
-                if (!keys.includes(keyName)) {
-                    keys.push(keyName);
-                }
-                
-                this.value = keys.join('+');
-            });
-        });
-    }
 </script>
 {% endblock %}

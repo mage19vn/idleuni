@@ -16,26 +16,16 @@
         <div class="modal-body">
             <div style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed var(--border);">
                 <div style="font-weight: 700; margin-bottom: 10px; font-size: 13px; color: var(--text-main);">Giao diện & Công cụ:</div>
-                <div style="display: flex; flex-direction: column; gap: 8px;">
-                    <button id="themeToggleBtn" class="setting-btn" onclick="toggleTheme(event)"><i class="ph-bold ph-moon"></i> Giao diện tối</button>
-                    <button id="btnToggleVis" class="setting-btn" onclick="toggleVisualizer()"><i class="ph-bold ph-eye"></i> Hiện bảng Visualizer</button>
-                    <div style="display: flex; gap: 8px;">
-                        <button id="btnTogglePrev" class="setting-btn flex-1 disabled" onclick="togglePrevLine()"><i class="ph-fill ph-circle" style="color: #22c55e;"></i> Line</button>
-                    </div>
-                </div>
-            </div>
-
-            <div style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed var(--border);">
-                <div style="font-weight: 700; margin-bottom: 10px; font-size: 13px; color: var(--text-main);">Tệp tin (Local):</div>
-                <div style="display: flex; gap: 8px;">
-                    <button class="setting-btn flex-1" onclick="document.getElementById('fileInput').click()"><i class="ph-bold ph-folder-open"></i> Tải code</button>
-                    <button class="setting-btn flex-1" onclick="saveCodeLocal()"><i class="ph-bold ph-floppy-disk"></i> Lưu code</button>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <button id="themeToggleBtn" class="setting-btn" onclick="toggleTheme(event)" title="Chuyển đổi Sáng/Tối"><i class="ph-bold ph-moon"></i> Giao diện</button>
+                    <button id="btnToggleVis" class="setting-btn" onclick="toggleVisualizer()"><i class="ph-bold ph-eye"></i> Visualizer</button>
+                    <button id="btnTogglePrev" class="setting-btn disabled" onclick="togglePrevLine()" style="grid-column: span 2;"><i class="ph-fill ph-circle" style="color: #22c55e;"></i> Dòng lệnh hiện tại</button>
                 </div>
             </div>
 
             <div style="font-weight: 700; margin-bottom: 10px; font-size: 13px; color: var(--text-main);">Hiển thị biến (Debug):</div>
-            <div id="debugList">
-                <div style="color: var(--text-muted); font-size: 13px; text-align: center;">Chưa có dữ liệu. Hãy chạy code trước!</div>
+            <div id="debugList" style="background: var(--bg-body); padding: 10px; border-radius: 8px; border: 1px solid var(--border); min-height: 60px; display: flex; flex-direction: column; gap: 6px;">
+                <div style="color: var(--text-muted); font-size: 12px; text-align: center; margin-top: 12px;"><i class="ph-bold ph-code" style="font-size: 18px; display: block; margin-bottom: 4px;"></i>Chưa có dữ liệu. Hãy chạy code!</div>
             </div>
             <div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--border);">
                 <div style="font-weight: 700; margin-bottom: 10px; font-size: 13px; color: var(--text-main);">Hệ thống:</div>
@@ -49,29 +39,8 @@
         </div>
     </div>
 
-    <div class="header">
-        <a href="{% url 'index' %}" class="logo" style="text-decoration: none; color: inherit;"><span>[ / ]</span> Uni Compiler</a>
-        <div class="controls">
-            <div class="slider-container" style="display: flex; align-items: center; gap: 8px; margin: 0 10px;">
-                <input type="range" id="timeSlider" min="0" max="0" value="0" disabled title="Kéo để tua thời gian">
-                <span id="stepCounter" style="font-size: 12px; font-weight: bold; min-width: 45px; text-align: center; color: var(--text-muted);">0/0</span>
-            </div>
-            
-            <button id="prevBtn" onclick="prevStep()" disabled title="Lùi lại 1 bước (Ctrl + ←)"><i class="ph-bold ph-skip-back"></i></button>
-            <button id="nextBtn" onclick="nextStep()" disabled title="Tiếp tục 1 bước (Ctrl + →)"><i class="ph-bold ph-skip-forward"></i></button>
-            
-            <span id="loader"><span class="spinning"><i class="ph-bold ph-gear"></i></span> Đang xử lý...</span>
-            <button id="runBtn" class="btn-run" onclick="runCode()" title="Biên dịch và chạy mô phỏng (Ctrl + Enter)"><i class="ph-bold ph-play"></i> Chạy Code</button>
 
-            <div class="control-divider"></div>
-            <button class="btn-icon" onclick="toggleDebug()" title="Cài đặt giao diện & hiển thị"><i class="ph-bold ph-gear"></i></button>
-        </div>
-    </div>
 
-    <div class="metrics-bar">
-        <span><i class="ph-bold ph-timer"></i> Thời gian chạy: <span id="timeMetric" class="metrics-value">0.00</span> ms</span>
-        <span><i class="ph-bold ph-floppy-disk"></i> Bộ nhớ: <span id="memMetric" class="metrics-value">0.00</span> KB</span>
-    </div>
 
     <div class="mobile-tabs">
         <button class="tab-btn active" onclick="switchTab('editor')"><i class="ph-bold ph-code"></i> Editor</button>
@@ -82,19 +51,41 @@
     <div class="workspace hide-vis" id="workspace">
         <div class="pane-left" id="leftPane" style="flex: 1 1 100%;">
             <div class="editor-container" id="editorContainer">
-                <div class="pane-header" style="flex-shrink: 0; display: flex; justify-content: space-between; align-items: center;">
-                    <span><i class="ph-bold ph-code"></i> Viết code vào đây</span>
-                    <div class="controls" style="gap: 6px;">
+                <div class="pane-header" style="flex-shrink: 0; display: flex; justify-content: center; align-items: center; border-bottom: 1px solid var(--border); padding: 12px 16px;">
+                    <div class="controls" style="gap: 6px; flex-wrap: wrap; justify-content: center;">
                         <input type="file" id="fileInput" style="display: none;" accept=".py,.cpp,.txt,.c">
                         <select id="langSelect" onchange="changeLanguage()" title="Chọn ngôn ngữ lập trình">
                             <option value="python" {% if profile and profile.default_language == 'python' %}selected{% endif %}>Python 3</option>
-                            <option value="cpp" {% if profile and profile.default_language == 'cpp' %}selected{% endif %}>C++ (GDB)</option>
+                            <option value="cpp" {% if profile and profile.default_language == 'cpp' %}selected{% endif %}>C++</option>
                         </select>
-                        <button class="btn-icon" onclick="saveSnippet()" title="Lưu code lên hệ thống"><i class="ph-bold ph-cloud-arrow-up"></i></button>
+                        <button class="btn-icon" onclick="document.getElementById('fileInput').click()" title="Tải file từ máy"><i class="ph-bold ph-folder-open"></i></button>
+                        <button class="btn-icon" onclick="saveCodeLocal()" title="Tải code xuống máy"><i class="ph-bold ph-download-simple"></i></button>
+                        <button id="saveBtn" class="btn-icon" onclick="saveSnippet()" title="Lưu code lên đám mây"><i class="ph-bold ph-cloud-arrow-up"></i></button>
+                        <div class="control-divider"></div>
+
+                        <div class="header-metrics" style="display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--text-muted); font-family: var(--font-code); background: var(--bg-io); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border);">
+                            <span title="Thời gian chạy"><i class="ph-bold ph-timer"></i> <span id="timeMetric" style="color: var(--text-main); font-weight: bold;">0.00</span> ms</span>
+                            <span title="Bộ nhớ tiêu thụ"><i class="ph-bold ph-floppy-disk"></i> <span id="memMetric" style="color: var(--text-main); font-weight: bold;">0.00</span> KB</span>
+                        </div>
+
+                        <div class="playback-controls" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; margin: 0 10px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <button id="prevBtn" onclick="prevStep()" class="btn-icon" style="padding: 4px 8px !important; font-size: 13px !important; border-radius: 6px;" disabled title="Lùi lại 1 bước (Ctrl + ←)"><i class="ph-bold ph-skip-back"></i></button>
+                                <span id="stepCounter" style="font-size: 12px; font-weight: bold; min-width: 45px; text-align: center; color: var(--text-muted);">0/0</span>
+                                <button id="nextBtn" onclick="nextStep()" class="btn-icon" style="padding: 4px 8px !important; font-size: 13px !important; border-radius: 6px;" disabled title="Tiếp tục 1 bước (Ctrl + →)"><i class="ph-bold ph-skip-forward"></i></button>
+                            </div>
+                            <input type="range" id="timeSlider" min="0" max="0" value="0" disabled title="Kéo để tua thời gian" style="width: 160px; height: 4px; margin: 0; cursor: pointer; accent-color: var(--text-accent);">
+                        </div>
+                        <button id="runBtn" class="btn-icon" style="background: var(--text-accent); color: white; border-color: var(--text-accent);" onclick="runCode()" title="Biên dịch và chạy (Ctrl + Enter)"><i class="ph-bold ph-play"></i></button>
+
+                        <div class="control-divider"></div>
+                        <button class="btn-icon" onclick="toggleDebug()" title="Cài đặt giao diện & hiển thị"><i class="ph-bold ph-gear"></i></button>
                     </div>
                 </div>
                 <div id="editorDOM" style="width: 100%; flex: 1; position: relative;"></div>
             </div>
+            
+            <div class="resizer resizer-internal" id="resizerInternal"></div>
             
             <div class="io-wrapper" id="ioWrapper">
                 <div class="io-pane">
@@ -120,6 +111,13 @@
         </div>
     </div>
 
+    <!-- LOGO WATERMARK -->
+    <div style="position: fixed; top: 20px; right: 30px; font-size: 20px; font-weight: 800; font-family: var(--font-code); color: var(--text-main); opacity: 0.2; pointer-events: none; z-index: 1000; user-select: none;">
+        <span style="color: var(--text-accent);">[ / ]</span> Uni Compiler
+    </div>
+
+
+
 {% endblock %}
 
 {% block extra_js %}
@@ -140,5 +138,8 @@
     {% if user_templates %}
     {{ user_templates|json_script:"user-templates-data" }}
     {% endif %}
+    <script src="{% static 'compiler/js/common.js' %}"></script>
+    <script src="{% static 'compiler/js/keymap.js' %}"></script>
     <script src="{% static 'compiler/js/script.js' %}?v=1780623281"></script>
+    <script src="{% static 'compiler/js/editor_init.js' %}"></script>
 {% endblock %}

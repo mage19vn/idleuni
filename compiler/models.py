@@ -61,3 +61,12 @@ class CodeTemplate(models.Model):
 
     def __str__(self):
         return f"{self.author_ip} - {self.name} ({self.language})"
+
+class KeymapTemplate(models.Model):
+    hash_id = models.CharField(max_length=8, unique=True, db_index=True)
+    name = models.CharField(max_length=100, default='Custom Keymap')
+    keymap_data = models.JSONField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Keymap {self.hash_id}"
