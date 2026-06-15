@@ -108,6 +108,7 @@ def trace_python(code: str, inputs: str):
     
     sandbox_dir = '/sandbox_data' if os.path.exists('/sandbox_data') else None
     with tempfile.TemporaryDirectory(dir=sandbox_dir) as temp_dir:
+        os.chmod(temp_dir, 0o777)
         user_code_path = os.path.join(temp_dir, "main.py")
         with open(user_code_path, "w", encoding="utf-8") as f:
             f.write(code)
@@ -167,6 +168,7 @@ def trace_cpp(code: str, inputs: str):
 
     sandbox_dir = '/sandbox_data' if os.path.exists('/sandbox_data') else None
     with tempfile.TemporaryDirectory(dir=sandbox_dir) as temp_dir:
+        os.chmod(temp_dir, 0o777)
         exe_name = "main.exe" if os.name == 'nt' else "main.out"
         cpp_name = "main.cpp"
         
