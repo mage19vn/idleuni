@@ -188,7 +188,7 @@ def trace_cpp(code: str, inputs: str):
             vol_args = ["-v", f"{temp_dir}:/sandbox", "-w", "/sandbox"]
 
         compile_process = subprocess.run(
-            ["docker", "run", "--rm", "--network", "none"] + vol_args + ["unicorns-cpp:latest", "g++", "-g", "-O0", cpp_name, "-o", exe_name],
+            ["docker", "run", "--rm", "--network", "none"] + vol_args + ["unicorns-cpp:latest", "g++", "-O2", cpp_name, "-o", exe_name],
             cwd=temp_dir, capture_output=True, text=True
         )
         
