@@ -40,10 +40,23 @@ python manage.py migrate
 
 ## ⚡ 3. Hướng dẫn Khởi chạy (Running the Project)
 
-Hệ thống được chia thành 2 chế độ:
+Hệ thống cung cấp nhiều phương thức khởi chạy khác nhau tùy thuộc vào môi trường:
 
-### Chế độ 1: Môi trường Sản xuất (Async / Production Mode)
-Chế độ này phân tách việc biên dịch code ra một tiến trình riêng để hệ thống không bao giờ bị nghẽn. Bạn cần mở **3 cửa sổ Terminal (Command Prompt)** riêng biệt và chạy đồng thời:
+### Chế độ 1: Dùng Docker Compose (Khuyên dùng cho Server / Production)
+Đây là cách đơn giản và ổn định nhất để chạy trên máy chủ (Linux/VPS). Hệ thống sẽ tự động đóng gói và thiết lập toàn bộ PostgreSQL, Redis, Web Server (Gunicorn) và Celery Worker.
+1. Hãy đảm bảo máy bạn đã cài đặt [Docker](https://docs.docker.com/get-docker/) và **Docker Compose**.
+2. Tại thư mục dự án, chạy lệnh:
+```bash
+docker-compose up -d --build
+```
+3. Khởi tạo cơ sở dữ liệu cho lần chạy đầu tiên:
+```bash
+docker-compose exec -T web python manage.py migrate
+```
+*(💡 Mẹo: Trên server Linux, bạn có thể chạy thẳng file `./update.sh` để tự động hóa toàn bộ quá trình cập nhật code và build lại)*
+
+### Chế độ 2: Chạy thủ công đa tiến trình (Manual Async Mode)
+Dành cho Developer muốn tự quản lý từng thành phần. Bạn cần mở **3 cửa sổ Terminal (Command Prompt)** riêng biệt và chạy đồng thời:
 
 **Terminal 1: Khởi động Redis (Nếu dùng Docker)**
 ```bash
@@ -66,7 +79,7 @@ celery -A unicorns_project worker --loglevel=info --pool=solo
 celery -A unicorns_project worker --loglevel=info
 ```
 
-### Chế độ 2: Môi trường Test Nhanh (Eager Mode / No Redis)
+### Chế độ 3: Môi trường Test Nhanh (Eager Mode / No Redis)
 Dành cho Developer muốn test UI nhanh mà không cần bật Redis và Celery Worker.
 1. Mở file `unicorns_project/settings.py`.
 2. Tìm và BẬT biến này lên: `CELERY_TASK_ALWAYS_EAGER = True`.
