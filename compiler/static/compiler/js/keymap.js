@@ -186,9 +186,11 @@ function saveCurrentKeymap() {
     }
 }
 
-async function saveKeymapToCloud() {
-    const btn = event.currentTarget;
-    btn.innerHTML = '<i class="ph-bold ph-spinner spinning"></i>';
+async function saveKeymapToCloud(e) {
+    const evt = e || event;
+    const btn = evt ? evt.currentTarget : null;
+    const originalText = btn ? btn.innerHTML : '';
+    if (btn) btn.innerHTML = '<i class="ph-bold ph-spinner spinning"></i>';
     try {
         const res = await fetch("/api/keymap/save/", {
             method: "POST",
@@ -200,14 +202,16 @@ async function saveKeymapToCloud() {
         });
         const data = await res.json();
         if (data.success) {
-            document.getElementById("keymapHashDisplay").value = data.hash_id;
+            const hashDisplay = document.getElementById("keymapHashDisplay");
+            if (hashDisplay) hashDisplay.value = data.hash_id;
+            if (btn) { btn.innerHTML = '<i class="ph-bold ph-check"></i> Đã lưu!'; setTimeout(() => { btn.innerHTML = originalText; }, 2000); return; }
         } else {
             alert("Lỗi: " + data.error);
         }
     } catch(e) {
         alert("Lỗi kết nối");
     } finally {
-        btn.innerHTML = '<i class="ph-bold ph-cloud-arrow-up"></i> Tải lên';
+        if (btn && !btn.innerHTML.includes('check')) btn.innerHTML = originalText;
     }
 }
 

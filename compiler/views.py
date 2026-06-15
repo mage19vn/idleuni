@@ -263,11 +263,22 @@ def profile_view(request):
     profile, created = Profile.objects.get_or_create(ip_address=ip)
         
     if request.method == 'POST':
+        form_type = request.POST.get('form_type', 'ide_settings')
         p_form = ProfileUpdateForm(request.POST, instance=profile)
-        if p_form.is_valid():
-            p_form.save()
-            messages.success(request, 'Cập nhật hồ sơ thành công!')
+
+        if form_type == 'display_name':
+            # Chỉ lưu tên tác giả
+            if p_form['display_name'].value():
+                profile.display_name = p_form['display_name'].value()
+                profile.save(update_fields=['display_name'])
+            messages.success(request, 'Cập nhật tên tác giả thành công!')
             return redirect('profile')
+        else:
+            # Lưu toàn bộ cài đặt IDE (không gỳm display_name)
+            if p_form.is_valid():
+                p_form.save()
+                messages.success(request, 'Cập nhật cài đặt IDE thành công!')
+                return redirect('profile')
     else:
         p_form = ProfileUpdateForm(instance=profile)
         

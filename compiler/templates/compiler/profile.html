@@ -42,15 +42,17 @@
                     {% endfor %}
                 {% endif %}
 
-                <form method="post" action="{% url 'profile' %}">
+                <!-- Form riêng: Thông tin thiết bị + Tên tác giả -->
+                <form method="post" action="{% url 'profile' %}" id="formDisplayName">
                     {% csrf_token %}
-                    
+                    <input type="hidden" name="form_type" value="display_name">
                     <div class="info-section">
                         <div class="info-header">
                             <div class="info-title">
                                 <h3>Thông tin thiết bị</h3>
                                 <span>Định danh thiết bị hiện tại</span>
                             </div>
+                            <button type="submit" class="btn-edit">Chỉnh sửa</button>
                         </div>
                         <div class="data-table">
                             <div class="data-row">
@@ -68,7 +70,13 @@
                             </div>
                         </div>
                     </div>
+                </form>
 
+                <!-- Form riêng: Cài đặt IDE -->
+                <form method="post" action="{% url 'profile' %}" id="formIDE">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="ide_settings">
+                    
                     <div class="info-section">
                         <div class="info-header">
                             <div class="info-title">
@@ -123,7 +131,7 @@
                         </div>
                     </div>
                 </form>
-            </div>
+                </div>
 
             <!-- QUẢN LÝ TEMPLATES -->
             <div id="content-templates">
@@ -234,6 +242,9 @@
                             <label style="font-weight: bold; font-size: 14px; margin-bottom: 8px; display: block; color: var(--text-main);">2. Chỉnh sửa phím tắt:</label>
                             <div id="keymapEditorList" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; max-width: 800px; border: 1px solid var(--border); padding: 20px; border-radius: 10px; background: var(--bg-io); box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);">
                                 <!-- JS sẽ render các ô input vào đây -->
+                            </div>
+                            <div style="margin-top: 14px; max-width: 800px;">
+                                <button class="btn-edit" onclick="saveKeymapToCloud(event)" style="display: flex; align-items: center; gap: 6px;"><i class="ph-bold ph-floppy-disk"></i> Lưu Phím tắt</button>
                             </div>
                         </div>
 
