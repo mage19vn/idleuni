@@ -11,6 +11,8 @@ from Crypto.Util.Padding import unpad
 SECRET_KEY_AES = b'12345678901234567890123456789012'
 IV_AES = b'1234567890123456'
 
+from django.core.exceptions import RequestDataTooBig
+
 def get_decrypted_data(request):
     try:
         body = json.loads(request.body)
@@ -21,6 +23,8 @@ def get_decrypted_data(request):
             decrypted_bytes = unpad(cipher.decrypt(encrypted_bytes), AES.block_size)
             return json.loads(decrypted_bytes.decode('utf-8'))
         return body
+    except RequestDataTooBig:
+        raise
     except Exception as e:
         print('Decrypt Error:', e)
         return {}
@@ -369,6 +373,11 @@ def save_snippet_api(request):
             code = data.get('code', '')
             language = data.get('language', 'python')
             input_text = data.get('inputs', '')
+            if len(code) > 50000:
+                return JsonResponse({"success": False, "error": "Code quá dài (tối đa 50KB)."})
+            if len(input_text) > 10000:
+                return JsonResponse({"success": False, "error": "Input quá dài (tối đa 10KB)."})
+            
             existing_hash = data.get('hash_id')
             title = data.get('title', 'Không tên')
             is_public = data.get('is_public', True)
@@ -439,6 +448,10 @@ def save_snippet_api(request):
 @rate_limit(limit=5, window=10)
 def visualize_api(request):
     if request.method == "POST":
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"CSRF Bypass Debug -> request.is_secure(): {request.is_secure()}")
+        logger.error(f"CSRF Bypass Debug -> request.COOKIES: {request.COOKIES}")
         try:
             data = get_decrypted_data(request)
             language = data.get("language")

@@ -38,10 +38,10 @@
 
         <div class="pane-right" id="rightPane">
             <div class="meta-info">
-                <div class="fs-md mb-2 text-accent">Tên Snippet: <strong>{{ snippet.title|default:"Không tên" }}</strong></div>
+                <div class="fs-md mb-2 text-accent">Tên Snippet: <strong>{{ snippet.title|default:"Không tên"|escape }}</strong></div>
                 <div>Ngôn ngữ: <strong>{{ snippet.language|upper }}</strong></div>
                 <div>Ngày tạo: <strong>{{ snippet.created_at|date:"d/m/Y H:i" }}</strong></div>
-                <div>Tác giả: <strong>{% if author_profile and author_profile.display_name %}{{ author_profile.display_name }}{% else %}Ẩn danh{% endif %}</strong></div>
+                <div>Tác giả: <strong>{% if author_profile and author_profile.display_name %}{{ author_profile.display_name|escape }}{% else %}Ẩn danh{% endif %}</strong></div>
                 <div class="mt-2">
                     <span class="text-muted">Trạng thái: </span>
                     {% if snippet.is_public %}
@@ -76,7 +76,7 @@
 
         async function saveToPersonalSnippet() {
             try {
-                const title = prompt("Nhập tên cho Snippet này:", "Bản sao của " + "{{ snippet.title|default:'Không tên' }}");
+                const title = prompt("Nhập tên cho Snippet này:", "Bản sao của " + "{{ snippet.title|default:'Không tên'|escapejs }}");
                 if (title === null) return; // User cancelled
                 
                 const payload = {

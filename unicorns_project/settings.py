@@ -55,7 +55,9 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'unicorns_project.urls'
-CORS_ALLOW_ALL_ORIGINS = True
+
+# Giới hạn dung lượng request body toàn cục (100KB) - chống Payload Bomb
+DATA_UPLOAD_MAX_MEMORY_SIZE = 100 * 1024  # 100KB
 
 TEMPLATES = [
     {
@@ -133,9 +135,10 @@ STATIC_URL = '/static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-CSRF_TRUSTED_ORIGINS = ['https://*.ngrok-free.dev', 'https://*.ngrok.io']
+CSRF_TRUSTED_ORIGINS = ['https://predefine-pavement-zit.ngrok-free.dev']
 
-CORS_ALLOW_ALL_ORIGINS = True 
+CORS_ALLOWED_ORIGINS = ['https://predefine-pavement-zit.ngrok-free.dev', 'http://127.0.0.1:8000']
+CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOW_CREDENTIALS = True
 
 APPEND_SLASH = True
@@ -275,9 +278,10 @@ STATIC_URL = '/static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-CSRF_TRUSTED_ORIGINS = ['https://*.ngrok-free.dev', 'https://*.ngrok.io']
+CSRF_TRUSTED_ORIGINS = ['https://predefine-pavement-zit.ngrok-free.dev']
 
-CORS_ALLOW_ALL_ORIGINS = True 
+CORS_ALLOWED_ORIGINS = ['https://predefine-pavement-zit.ngrok-free.dev', 'http://127.0.0.1:8000']
+CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOW_CREDENTIALS = True
 
 APPEND_SLASH = True
