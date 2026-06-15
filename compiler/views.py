@@ -118,7 +118,7 @@ def trace_python(code: str, inputs: str):
 
         is_docker = os.path.exists('/sandbox_data')
         if is_docker:
-            vol_args = ["-v", "sandbox_data:/sandbox_data", "-w", temp_dir]
+            vol_args = ["-v", "unicorns_sandbox_data:/sandbox_data", "-w", temp_dir]
         else:
             vol_args = ["-v", f"{temp_dir}:/sandbox", "-w", "/sandbox"]
 
@@ -175,7 +175,7 @@ def trace_cpp(code: str, inputs: str):
 
         is_docker = os.path.exists('/sandbox_data')
         if is_docker:
-            vol_args = ["-v", "sandbox_data:/sandbox_data", "-w", temp_dir]
+            vol_args = ["-v", "unicorns_sandbox_data:/sandbox_data", "-w", temp_dir]
         else:
             vol_args = ["-v", f"{temp_dir}:/sandbox", "-w", "/sandbox"]
 
