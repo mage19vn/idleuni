@@ -1090,7 +1090,7 @@ document.addEventListener('DOMContentLoaded', function() {
         let newLeftWidth = e.clientX - workspaceRect.left;
         
         // Chiều rộng tối thiểu để chứa đủ các nút công cụ
-        const minLeftWidth = 750; 
+        const minLeftWidth = 790; 
         const minRightWidth = 320; 
 
         if (newLeftWidth < minLeftWidth) newLeftWidth = minLeftWidth;
@@ -1157,7 +1157,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (isHorizontal) {
                 // Kéo thả theo chiều ngang (khi tắt Visualizer)
                 let newEditorWidth = e.clientX - parentRect.left;
-                const minEditorWidth = 750;
+                const minEditorWidth = 790;
                 const minIOWidth = 250;
                 
                 if (newEditorWidth < minEditorWidth) newEditorWidth = minEditorWidth;
