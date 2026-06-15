@@ -1,8 +1,11 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
+from django.views.generic import TemplateView
 from . import views
 
 urlpatterns = [
+    path('robots.txt', TemplateView.as_view(template_name="compiler/robots.txt", content_type="text/plain")),
+    path('sitemap.xml', TemplateView.as_view(template_name="compiler/sitemap.xml", content_type="application/xml")),
     path('profile/', views.profile_view, name='profile'),
     path('', views.index_view, name='index'),
     path('report.html', views.report_view, name='report'),
