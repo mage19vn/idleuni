@@ -47,9 +47,25 @@ echo "2. Dang build va chay lai toan bo he thong..."
 $DOCKER_CMD up -d --build
 
 echo "3. Dang khoi tao co so du lieu (Migrate)..."
-# Doi 3 giay de database kip san sang truoc khi migrate
-sleep 3
-$DOCKER_CMD exec -T web python manage.py migrate
+# Kiem tra va doi DB san sang (toi da 30 giay)
+echo "Dang cho database san sang..."
+for i in {1..15}; do
+    if $DOCKER_CMD exec -T web python manage.py inspectdb > /dev/null 2>&1; then
+        echo "Database da san sang!"
+        break
+    fi
+    echo "Cho database... ($i/15)"
+    sleep 2
+done
+
+# Chay migrate va bat loi neu that bai
+echo "Dang tien hanh migrate..."
+if ! $DOCKER_CMD exec -T web python manage.py migrate; then
+    echo "======================================================="
+    echo " LOI: MIGRATE THAT BAI! Kiem tra lai ket noi Database."
+    echo "======================================================="
+    exit 1
+fi
 
 echo ""
 echo "======================================================="
