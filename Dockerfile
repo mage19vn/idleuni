@@ -5,11 +5,12 @@ FROM python:3.9-slim
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-# Cài đặt môi trường compile C++, GDB và công cụ tính toán thời gian/bộ nhớ
+# Cài đặt môi trường compile C++, GDB, công cụ tính toán thời gian/bộ nhớ và docker CLI
 RUN apt-get update && apt-get install -y \
     g++ \
     gdb \
     time \
+    docker.io \
     && rm -rf /var/lib/apt/lists/*
 
 # Tạo thư mục làm việc trong Container

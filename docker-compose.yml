@@ -24,6 +24,8 @@ services:
     command: gunicorn unicorns_project.wsgi:application --bind 0.0.0.0:8000 --workers 3
     volumes:
       - .:/app
+      - /var/run/docker.sock:/var/run/docker.sock
+      - sandbox_data:/sandbox_data
     ports:
       - "8000:8000"
     environment:
@@ -41,6 +43,8 @@ services:
     command: celery -A unicorns_project worker --loglevel=info
     volumes:
       - .:/app
+      - /var/run/docker.sock:/var/run/docker.sock
+      - sandbox_data:/sandbox_data
     environment:
       - DB_HOST=db
       - CELERY_BROKER_URL=redis://redis:6379/0
@@ -54,3 +58,4 @@ services:
 
 volumes:
   postgres_data:
+  sandbox_data:

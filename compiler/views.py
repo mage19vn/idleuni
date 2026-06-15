@@ -106,19 +106,26 @@ def trace_python(code: str, inputs: str):
     if security_error:
         return {"trace": [], "output": "", "error": security_error}
     
-    with tempfile.TemporaryDirectory() as temp_dir:
+    sandbox_dir = '/sandbox_data' if os.path.exists('/sandbox_data') else None
+    with tempfile.TemporaryDirectory(dir=sandbox_dir) as temp_dir:
         user_code_path = os.path.join(temp_dir, "main.py")
         with open(user_code_path, "w", encoding="utf-8") as f:
             f.write(code)
 
         tracer_source_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "python_tracer.py")
+        import shutil
+        shutil.copy(tracer_source_path, os.path.join(temp_dir, "tracer.py"))
+
+        is_docker = os.path.exists('/sandbox_data')
+        if is_docker:
+            vol_args = ["-v", "sandbox_data:/sandbox_data", "-w", temp_dir]
+        else:
+            vol_args = ["-v", f"{temp_dir}:/sandbox", "-w", "/sandbox"]
 
         try:
             subprocess.run(
-                ["docker", "run", "--rm", "--network", "none", 
-                 "-v", f"{temp_dir}:/sandbox", 
-                 "-v", f"{tracer_source_path}:/opt/tracer.py:ro",
-                 "-i", "unicorns-python:latest", "python", "/opt/tracer.py"],
+                ["docker", "run", "--rm", "--network", "none"] + vol_args + 
+                ["-i", "unicorns-python:latest", "python", "tracer.py"],
                 cwd=temp_dir, input=inputs, timeout=5,
                 capture_output=True, text=True
             )
@@ -158,15 +165,22 @@ def trace_cpp(code: str, inputs: str):
     code = re.sub(r'freopen\s*\(\s*["\'][^"\']+["\']\s*,\s*["\']r["\']\s*,\s*stdin\s*\)\s*;?', '', code)
     code = re.sub(r'freopen\s*\(\s*["\'][^"\']+["\']\s*,\s*["\']w["\']\s*,\s*stdout\s*\)\s*;?', '', code)
 
-    with tempfile.TemporaryDirectory() as temp_dir:
+    sandbox_dir = '/sandbox_data' if os.path.exists('/sandbox_data') else None
+    with tempfile.TemporaryDirectory(dir=sandbox_dir) as temp_dir:
         exe_name = "main.exe" if os.name == 'nt' else "main.out"
         cpp_name = "main.cpp"
         
         with open(os.path.join(temp_dir, cpp_name), "w", encoding="utf-8") as f: f.write(code)
         with open(os.path.join(temp_dir, "input.txt"), "w", encoding="utf-8") as f: f.write(inputs)
 
+        is_docker = os.path.exists('/sandbox_data')
+        if is_docker:
+            vol_args = ["-v", "sandbox_data:/sandbox_data", "-w", temp_dir]
+        else:
+            vol_args = ["-v", f"{temp_dir}:/sandbox", "-w", "/sandbox"]
+
         compile_process = subprocess.run(
-            ["docker", "run", "--rm", "--network", "none", "-v", f"{temp_dir}:/sandbox", "unicorns-cpp:latest", "g++", "-g", "-O0", cpp_name, "-o", exe_name],
+            ["docker", "run", "--rm", "--network", "none"] + vol_args + ["unicorns-cpp:latest", "g++", "-g", "-O0", cpp_name, "-o", exe_name],
             cwd=temp_dir, capture_output=True, text=True
         )
         
@@ -181,7 +195,7 @@ def trace_cpp(code: str, inputs: str):
         
         try:
             exec_process = subprocess.run(
-                ["docker", "run", "--rm", "--network", "none", "-v", f"{temp_dir}:/sandbox", "-i", "unicorns-cpp:latest", f"./{exe_name}"],
+                ["docker", "run", "--rm", "--network", "none"] + vol_args + ["-i", "unicorns-cpp:latest", f"./{exe_name}"],
                 cwd=temp_dir, input=inputs, timeout=3, capture_output=True, text=True
             )
             end_time = time.perf_counter()
@@ -205,13 +219,13 @@ def trace_cpp(code: str, inputs: str):
                 f.write(instrumented_code)
                 
             trace_compile = subprocess.run(
-                ["docker", "run", "--rm", "--network", "none", "-v", f"{temp_dir}:/sandbox", "unicorns-cpp:latest", "g++", "-g", "-O0", inst_cpp_name, "-o", inst_exe_name],
+                ["docker", "run", "--rm", "--network", "none"] + vol_args + ["unicorns-cpp:latest", "g++", "-g", "-O0", inst_cpp_name, "-o", inst_exe_name],
                 cwd=temp_dir, capture_output=True, text=True
             )
             
             if trace_compile.returncode == 0:
                 subprocess.run(
-                    ["docker", "run", "--rm", "--network", "none", "-v", f"{temp_dir}:/sandbox", "-i", "unicorns-cpp:latest", f"./{inst_exe_name}"],
+                    ["docker", "run", "--rm", "--network", "none"] + vol_args + ["-i", "unicorns-cpp:latest", f"./{inst_exe_name}"],
                     cwd=temp_dir, input=inputs, timeout=5, capture_output=True, text=True
                 )
             else:
