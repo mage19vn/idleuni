@@ -117,6 +117,9 @@ def trace_python(code: str, inputs: str):
         import shutil
         shutil.copy(tracer_source_path, os.path.join(temp_dir, "tracer.py"))
 
+        os.chmod(user_code_path, 0o777)
+        os.chmod(os.path.join(temp_dir, "tracer.py"), 0o777)
+
         is_docker = os.path.exists('/sandbox_data')
         if is_docker:
             vol_args = ["-v", "unicorns_sandbox_data:/sandbox_data", "-w", temp_dir]
@@ -175,6 +178,9 @@ def trace_cpp(code: str, inputs: str):
         with open(os.path.join(temp_dir, cpp_name), "w", encoding="utf-8") as f: f.write(code)
         with open(os.path.join(temp_dir, "input.txt"), "w", encoding="utf-8") as f: f.write(inputs)
 
+        os.chmod(os.path.join(temp_dir, cpp_name), 0o777)
+        os.chmod(os.path.join(temp_dir, "input.txt"), 0o777)
+
         is_docker = os.path.exists('/sandbox_data')
         if is_docker:
             vol_args = ["-v", "unicorns_sandbox_data:/sandbox_data", "-w", temp_dir]
@@ -219,6 +225,7 @@ def trace_cpp(code: str, inputs: str):
             
             with open(os.path.join(temp_dir, inst_cpp_name), "w", encoding="utf-8") as f:
                 f.write(instrumented_code)
+            os.chmod(os.path.join(temp_dir, inst_cpp_name), 0o777)
                 
             trace_compile = subprocess.run(
                 ["docker", "run", "--rm", "--network", "none"] + vol_args + ["unicorns-cpp:latest", "g++", "-g", "-O0", inst_cpp_name, "-o", inst_exe_name],
