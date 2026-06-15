@@ -18,9 +18,9 @@
                 <div style="font-weight: 700; margin-bottom: 10px; font-size: 13px; color: var(--text-main);">Giao diện & Công cụ:</div>
                 <div style="display: flex; flex-direction: column; gap: 8px;">
                     <button id="themeToggleBtn" class="setting-btn" onclick="toggleTheme(event)"><i class="ph-bold ph-moon"></i> Giao diện tối</button>
-                    <button id="btnToggleVis" class="setting-btn" onclick="toggleVisualizer()"><i class="ph-bold ph-eye-slash"></i> Ẩn bảng Visualizer</button>
+                    <button id="btnToggleVis" class="setting-btn" onclick="toggleVisualizer()"><i class="ph-bold ph-eye"></i> Hiện bảng Visualizer</button>
                     <div style="display: flex; gap: 8px;">
-                        <button id="btnTogglePrev" class="setting-btn flex-1" onclick="togglePrevLine()"><i class="ph-fill ph-circle" style="color: #22c55e;"></i> Line</button>
+                        <button id="btnTogglePrev" class="setting-btn flex-1 disabled" onclick="togglePrevLine()"><i class="ph-fill ph-circle" style="color: #22c55e;"></i> Line</button>
                     </div>
                 </div>
             </div>
@@ -106,9 +106,12 @@
         <button class="tab-btn" onclick="switchTab('visualizer')"><i class="ph-bold ph-magnifying-glass"></i> Visualizer</button>
     </div>
 
-    <div class="workspace" id="workspace">
-        <div class="pane-left" id="leftPane">
-            <div class="editor-container" id="editorContainer" style="width: 100%; height: 100%;"></div>
+    <div class="workspace hide-vis" id="workspace">
+        <div class="pane-left" id="leftPane" style="flex: 1 1 100%;">
+            <div class="editor-container" id="editorContainer">
+                <div class="pane-header" style="flex-shrink: 0;"><i class="ph-bold ph-code"></i> Viết code vào đây</div>
+                <div id="editorDOM" style="width: 100%; flex: 1; position: relative;"></div>
+            </div>
             
             <div class="io-wrapper" id="ioWrapper">
                 <div class="io-pane">
@@ -122,9 +125,9 @@
             </div>
         </div>
 
-        <div class="resizer" id="resizer"></div>
+        <div class="resizer" id="resizer" style="display: none;"></div>
 
-        <div class="pane-right pane" id="rightPane">
+        <div class="pane-right pane" id="rightPane" style="display: none;">
             <div class="pane-header"><i class="ph-bold ph-magnifying-glass"></i> Các biến / Hàm</div>
             <div id="visualizerArea" class="visualizer-area">
                 <div style="color: #8b949e; font-size: 13px; text-align: center; margin-top: 40px;">

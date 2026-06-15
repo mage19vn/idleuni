@@ -21,7 +21,7 @@ let isDebugOpen = false;
 let visibleVariables = new Set();
 let currentErrorLine = -1;
 
-let isVisualizerVisible = true;
+let isVisualizerVisible = false;
 let isPrevLineVisible = true;
 
 // ==========================================
@@ -151,7 +151,7 @@ require(['vs/editor/editor.main'], function() {
     const monacoFontSize = parseInt(localStorage.getItem('editor_font_size')) || 14;
     const monacoFontFamily = localStorage.getItem('editor_font_family') || "'Consolas', 'Fira Code', monospace";
     
-    monacoEditor = monaco.editor.create(document.getElementById('editorContainer'), {
+    monacoEditor = monaco.editor.create(document.getElementById('editorDOM'), {
         value: initialCode,
         language: initialLang === 'cpp' ? 'cpp' : 'python',
         theme: monacoTheme,
@@ -379,7 +379,7 @@ function toggleVisualizer() {
     if (isVisualizerVisible) {
         if(paneRight) paneRight.style.display = 'flex'; 
         if(workspace) workspace.classList.remove('hide-vis'); 
-        if(btnToggleVis) btnToggleVis.innerHTML = 'Ẩn bảng Visualizer';
+        if(btnToggleVis) btnToggleVis.innerHTML = '<i class="ph-bold ph-eye-slash"></i> Ẩn bảng Visualizer';
         if (isPrevLineVisible && btnTogglePrev) btnTogglePrev.classList.remove('disabled');
         
         if(resizer) resizer.style.display = 'flex';
@@ -387,7 +387,7 @@ function toggleVisualizer() {
     } else {
         if(paneRight) paneRight.style.display = 'none'; 
         if(workspace) workspace.classList.add('hide-vis');
-        if(btnToggleVis) btnToggleVis.innerHTML = 'Hiện bảng Visualizer';
+        if(btnToggleVis) btnToggleVis.innerHTML = '<i class="ph-bold ph-eye"></i> Hiện bảng Visualizer';
         if(btnTogglePrev) btnTogglePrev.classList.add('disabled');
         
         if(resizer) resizer.style.display = 'none';
