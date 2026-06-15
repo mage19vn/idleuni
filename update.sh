@@ -46,6 +46,18 @@ docker rm unicorns_app 2>/dev/null || true
 echo "2. Dang build va chay lai toan bo he thong..."
 $DOCKER_CMD up -d --build
 
+echo "2.5. Kiem tra Sandbox Images..."
+if ! docker image inspect unicorns-cpp:latest >/dev/null 2>&1; then
+    echo "Dang tai unicorns-cpp..."
+    docker pull gcc:latest
+    docker tag gcc:latest unicorns-cpp:latest
+fi
+if ! docker image inspect unicorns-python:latest >/dev/null 2>&1; then
+    echo "Dang tai unicorns-python..."
+    docker pull python:3.9-slim
+    docker tag python:3.9-slim unicorns-python:latest
+fi
+
 echo "3. Dang khoi tao co so du lieu (Migrate)..."
 # Kiem tra va doi DB san sang (toi da 30 giay)
 echo "Dang cho database san sang..."
