@@ -11,19 +11,27 @@ import zlib
 import secrets
 import hashlib
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth import login
 from django.http import JsonResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
-from .models import Profile, CodeSnippet
+from .models import Profile, CodeSnippet, CodeTemplate
+from .forms import ProfileUpdateForm
+from django.contrib import messages
+from datetime import datetime
 
 try:
     import resource
     HAS_RESOURCE = True
 except ImportError:
     HAS_RESOURCE = False
+
+def get_client_ip(request):
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0].strip()
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
 
 def is_safe_python_code(code: str) -> str:
     try:
@@ -81,7 +89,6 @@ def set_resource_limits():
             pass
 
 def get_safe_env():
-    # Cấu hình môi trường an toàn và thư mục Temp cho cả Windows & Linux (Docker)
     safe_env = {
         "PATH": os.environ.get("PATH", "/usr/bin:/bin:/usr/local/bin"),
         "LANG": os.environ.get("LANG", "en_US.UTF-8"),
@@ -196,7 +203,6 @@ def trace_cpp(code: str, inputs: str):
         except subprocess.TimeoutExpired:
             return {"trace": [], "output": "", "error": "Lỗi: Chương trình C++ chạy quá 2 giây (Time Limit Exceeded).", "error_line": -1, "time_ms": 2000.0, "memory_kb": 0.0}
         
-        # Dùng AST Instrumentation để tạo Trace thay vì GDB
         trace_result = []
         try:
             import sys
@@ -240,8 +246,6 @@ def trace_cpp(code: str, inputs: str):
                             trace_result = json.loads(content)
         except Exception as e:
             print("AST Instrumentation Error:", e)
-            with open(os.path.join(os.path.dirname(__file__), "AST_error.txt"), "a", encoding="utf-8") as f:
-                f.write(f"Error: {e}\n")
 
         error_msg = None
         if exec_process.stderr:
@@ -254,51 +258,27 @@ def trace_cpp(code: str, inputs: str):
 
 # --- VIEW CỦA DJANGO ---
 
-def register_view(request):
-    if request.user.is_authenticated:
-        return redirect('index')
-    if request.method == 'POST':
-        form = UserCreationForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            login(request, user)
-            return redirect('index')
-    else:
-        form = UserCreationForm()
-    return render(request, 'compiler/register.html', {'form': form})
-
-from .forms import UserProfileForm, ProfileUpdateForm
-from .models import Profile
-from django.contrib import messages
-
-@login_required
 def profile_view(request):
-    try:
-        profile = request.user.profile
-    except Profile.DoesNotExist:
-        profile = Profile.objects.create(user=request.user)
+    ip = get_client_ip(request)
+    profile, created = Profile.objects.get_or_create(ip_address=ip)
         
     if request.method == 'POST':
-        u_form = UserProfileForm(request.POST, instance=request.user)
         p_form = ProfileUpdateForm(request.POST, instance=profile)
-        
-        if u_form.is_valid() and p_form.is_valid():
-            u_form.save()
+        if p_form.is_valid():
             p_form.save()
             messages.success(request, 'Cập nhật hồ sơ thành công!')
             return redirect('profile')
     else:
-        u_form = UserProfileForm(instance=request.user)
         p_form = ProfileUpdateForm(instance=profile)
         
     context = {
-        'u_form': u_form,
-        'p_form': p_form
+        'p_form': p_form,
+        'ip_address': ip
     }
     return render(request, 'compiler/profile.html', context)
 
-@login_required
 def index_view(request):
+    ip = get_client_ip(request)
     snippet_id = request.GET.get('snippet')
     code_content = None
     input_content = None
@@ -317,37 +297,39 @@ def index_view(request):
             pass
 
     user_templates = []
-    if request.user.is_authenticated:
-        from .models import CodeTemplate
-        tpls = CodeTemplate.objects.filter(user=request.user)
-        for t in tpls:
-            user_templates.append({
-                "name": t.name,
-                "language": t.language,
-                "code": t.code
-            })
+    tpls = CodeTemplate.objects.filter(author_ip=ip)
+    for t in tpls:
+        user_templates.append({
+            "name": t.name,
+            "language": t.language,
+            "code": t.code
+        })
+
+    profile, _ = Profile.objects.get_or_create(ip_address=ip)
 
     return render(request, 'compiler/index.html', {
         'snippet_code': code_content,
         'snippet_input': input_content,
         'snippet_lang': language,
-        'user_templates': user_templates
+        'user_templates': user_templates,
+        'ip_address': ip,
+        'profile': profile
     })
 
-@login_required
 def report_view(request):
-    return render(request, 'compiler/report.html')
-
-from datetime import datetime
+    ip = get_client_ip(request)
+    profile, _ = Profile.objects.get_or_create(ip_address=ip)
+    return render(request, 'compiler/report.html', {'ip_address': ip, 'profile': profile})
 
 def view_snippet(request, hash_id):
+    ip = get_client_ip(request)
     snippet = CodeSnippet.objects.filter(hash_id=hash_id).first()
     
     is_accessible = False
     if snippet:
         if snippet.is_public:
             is_accessible = True
-        elif request.user.is_authenticated and snippet.author == request.user:
+        elif snippet.author_ip == ip:
             is_accessible = True
 
     if not is_accessible:
@@ -356,14 +338,16 @@ def view_snippet(request, hash_id):
                 self.hash_id = hid
                 self.language = "htnt"
                 self.created_at = datetime(2008, 4, 12, 0, 0, 0)
-                self.author = None
                 self.title = "Code Private / Not Found"
                 self.is_public = False
                 self.input_text = ""
         
+        profile, _ = Profile.objects.get_or_create(ip_address=ip)
         return render(request, 'compiler/review.html', {
             'snippet': DummySnippet(hash_id),
-            'code_content': "// Đây là code private hoặc hoàn toàn không có link này"
+            'code_content': "// Đây là code private hoặc hoàn toàn không có link này",
+            'ip_address': ip,
+            'profile': profile
         })
 
     code_content = ""
@@ -372,15 +356,19 @@ def view_snippet(request, hash_id):
             compressed_code = f.read()
         code_content = zlib.decompress(compressed_code).decode('utf-8')
         
+    profile, _ = Profile.objects.get_or_create(ip_address=ip)
     return render(request, 'compiler/review.html', {
         'snippet': snippet,
-        'code_content': code_content
+        'code_content': code_content,
+        'ip_address': ip,
+        'profile': profile
     })
 
 @csrf_exempt
 def save_snippet_api(request):
     if request.method == "POST":
         try:
+            ip = get_client_ip(request)
             data = json.loads(request.body)
             code = data.get('code', '')
             language = data.get('language', 'python')
@@ -390,22 +378,19 @@ def save_snippet_api(request):
             is_public = data.get('is_public', True)
 
             current_hash = hashlib.sha256(f"{language}|{input_text}|{code}".encode('utf-8')).hexdigest()
-            user = request.user if request.user.is_authenticated else None
             
             snippet = None
-            if existing_hash and user:
+            if existing_hash:
                 try:
                     existing_snippet = CodeSnippet.objects.get(hash_id=existing_hash)
-                    if existing_snippet.author == user:
+                    if existing_snippet.author_ip == ip:
                         snippet = existing_snippet
                 except CodeSnippet.DoesNotExist:
                     pass
             
-            # Nếu người dùng này đã lưu chính xác đoạn code này trước đó và không cố tình update snippet cụ thể
             if not snippet:
-                existing_identical = CodeSnippet.objects.filter(content_hash=current_hash, author=user).first()
+                existing_identical = CodeSnippet.objects.filter(content_hash=current_hash, author_ip=ip).first()
                 if existing_identical:
-                    # Cập nhật title/quyền nếu họ truyền lên khác mặc định
                     if 'title' in data:
                         existing_identical.title = data['title']
                     if 'is_public' in data:
@@ -416,7 +401,7 @@ def save_snippet_api(request):
             if not snippet:
                 snippet = CodeSnippet()
                 snippet.hash_id = secrets.token_hex(4)
-                snippet.author = user
+                snippet.author_ip = ip
                 snippet.title = data.get('title', 'Không tên')
                 snippet.is_public = data.get('is_public', True)
             else:
@@ -492,13 +477,11 @@ def task_status_api(request, task_id):
     
     return JsonResponse({"error": "Method not allowed"}, status=405)
 
-@login_required
 @csrf_exempt
 def templates_api(request):
-    from .models import CodeTemplate
-    
+    ip = get_client_ip(request)
     if request.method == "GET":
-        templates = CodeTemplate.objects.filter(user=request.user)
+        templates = CodeTemplate.objects.filter(author_ip=ip)
         data = []
         for t in templates:
             data.append({
@@ -520,7 +503,7 @@ def templates_api(request):
                 return JsonResponse({"error": "Missing fields"}, status=400)
                 
             template, created = CodeTemplate.objects.update_or_create(
-                user=request.user,
+                author_ip=ip,
                 name=name,
                 language=language,
                 defaults={"code": code}
@@ -533,18 +516,18 @@ def templates_api(request):
         try:
             data = json.loads(request.body)
             t_id = data.get("id")
-            CodeTemplate.objects.filter(id=t_id, user=request.user).delete()
+            CodeTemplate.objects.filter(id=t_id, author_ip=ip).delete()
             return JsonResponse({"success": True})
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
 
     return JsonResponse({"error": "Method not allowed"}, status=405)
 
-@login_required
 @csrf_exempt
 def snippets_api(request):
+    ip = get_client_ip(request)
     if request.method == "GET":
-        snippets = CodeSnippet.objects.filter(author=request.user).order_by('-updated_at')
+        snippets = CodeSnippet.objects.filter(author_ip=ip).order_by('-updated_at')
         data = []
         for s in snippets:
             data.append({
@@ -564,7 +547,7 @@ def snippets_api(request):
             title = data.get("title")
             is_public = data.get("is_public")
             
-            snippet = CodeSnippet.objects.get(hash_id=hash_id, author=request.user)
+            snippet = CodeSnippet.objects.get(hash_id=hash_id, author_ip=ip)
             if title is not None:
                 snippet.title = title
             if is_public is not None:
@@ -580,7 +563,7 @@ def snippets_api(request):
         try:
             data = json.loads(request.body)
             hash_id = data.get("hash_id")
-            snippet = CodeSnippet.objects.get(hash_id=hash_id, author=request.user)
+            snippet = CodeSnippet.objects.get(hash_id=hash_id, author_ip=ip)
             if os.path.exists(snippet.file_path):
                 os.remove(snippet.file_path)
             snippet.delete()

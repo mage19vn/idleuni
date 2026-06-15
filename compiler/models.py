@@ -1,7 +1,4 @@
 from django.db import models
-from django.contrib.auth.models import User
-from django.db.models.signals import post_save
-from django.dispatch import receiver
 
 class Profile(models.Model):
     THEME_CHOICES = [
@@ -13,8 +10,8 @@ class Profile(models.Model):
         ('cpp', 'C++ (GDB)'),
     ]
     EDITOR_THEME_CHOICES = [
-        ('unicorns-dark', 'Unicorns Dark'),
-        ('unicorns-light', 'Unicorns Light'),
+        ('unicorns-dark', 'Uni Dark'),
+        ('unicorns-light', 'Uni Light'),
         ('vs-dark', 'VS Dark'),
         ('vs', 'VS Light'),
         ('hc-black', 'High Contrast Dark'),
@@ -26,7 +23,7 @@ class Profile(models.Model):
         ("'Source Code Pro', monospace", 'Source Code Pro'),
     ]
     
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    ip_address = models.GenericIPAddressField(unique=True, verbose_name="IP Address")
     bio = models.TextField(max_length=500, blank=True, null=True, verbose_name="Mô tả cơ bản")
     default_language = models.CharField(max_length=20, choices=LANG_CHOICES, default='python', verbose_name="Ngôn ngữ mặc định")
     favorite_theme = models.CharField(max_length=20, choices=THEME_CHOICES, default='dark', verbose_name="Theme UI yêu thích")
@@ -35,22 +32,12 @@ class Profile(models.Model):
     editor_font_size = models.IntegerField(default=14, verbose_name="Cỡ chữ Editor")
 
     def __str__(self):
-        return f"{self.user.username} Profile"
-
-# Signal để tự động tạo Profile khi User được tạo
-@receiver(post_save, sender=User)
-def create_user_profile(sender, instance, created, **kwargs):
-    if created:
-        Profile.objects.create(user=instance)
-
-@receiver(post_save, sender=User)
-def save_user_profile(sender, instance, **kwargs):
-    instance.profile.save()
+        return f"Profile - {self.ip_address}"
 
 class CodeSnippet(models.Model):
     hash_id = models.CharField(max_length=8, unique=True, db_index=True)
     content_hash = models.CharField(max_length=64, db_index=True, blank=True, null=True)
-    author = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='snippets')
+    author_ip = models.GenericIPAddressField(null=True, blank=True, verbose_name="Author IP")
     title = models.CharField(max_length=100, default='Không tên')
     is_public = models.BooleanField(default=True)
     language = models.CharField(max_length=20)
@@ -63,14 +50,14 @@ class CodeSnippet(models.Model):
         return f"{self.title} ({self.hash_id}) - {self.language}"
 
 class CodeTemplate(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='templates')
+    author_ip = models.GenericIPAddressField(verbose_name="Author IP")
     name = models.CharField(max_length=50)
     language = models.CharField(max_length=20, choices=[('python', 'Python'), ('cpp', 'C++'), ('all', 'All')])
     code = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('user', 'name', 'language')
+        unique_together = ('author_ip', 'name', 'language')
 
     def __str__(self):
-        return f"{self.user.username} - {self.name} ({self.language})"
+        return f"{self.author_ip} - {self.name} ({self.language})"

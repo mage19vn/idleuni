@@ -109,27 +109,34 @@ function switchThemeLogic() {
 }
 
 function toggleTheme(event) {
-    const btn = document.getElementById('themeToggleBtn');
-    if(btn) {
-        btn.classList.add('theme-animate');
-        setTimeout(() => btn.classList.remove('theme-animate'), 600);
-    }
-
     if (!document.startViewTransition) {
         switchThemeLogic();
         return;
     }
 
-    const x = event ? event.clientX : window.innerWidth / 2;
-    const y = event ? event.clientY : window.innerHeight / 2;
-    const endRadius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+    // Trạng thái HIỆN TẠI (trước khi chuyển)
+    const isDark = document.body.classList.contains('dark-theme');
 
     const transition = document.startViewTransition(() => switchThemeLogic());
 
     transition.ready.then(() => {
+        // Tối -> Sáng: Vuốt từ phải qua trái
+        const slideFromRight = [
+            'polygon(100% 0, 100% 0, 100% 100%, 100% 100%)',
+            'polygon(0% 0, 100% 0, 100% 100%, 0% 100%)'
+        ];
+        
+        // Sáng -> Tối: Vuốt từ trái qua phải
+        const slideFromLeft = [
+            'polygon(0 0, 0 0, 0 100%, 0 100%)',
+            'polygon(0 0, 100% 0, 100% 100%, 0 100%)'
+        ];
+
+        const animationFrames = isDark ? slideFromRight : slideFromLeft;
+
         document.documentElement.animate(
-            { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${endRadius}px at ${x}px ${y}px)`] },
-            { duration: 500, easing: 'ease-in-out', pseudoElement: '::view-transition-new(root)' }
+            { clipPath: animationFrames },
+            { duration: 400, easing: 'ease-in-out', pseudoElement: '::view-transition-new(root)' }
         );
     });
 }

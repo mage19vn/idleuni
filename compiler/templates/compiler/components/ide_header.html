@@ -1,5 +1,5 @@
 <div class="header">
-    <a href="{% url 'index' %}" class="logo text-decoration-none"><span>[ / ]</span> Unicorns Compiler</a>
+    <a href="{% url 'index' %}" class="logo text-decoration-none"><span>[ / ]</span> Uni Compiler</a>
     <div class="controls">
         <input type="file" id="fileInput" class="d-none" accept=".py,.cpp,.txt,.c">
         <button class="btn-icon" onclick="saveSnippet()" title="Lưu code lên hệ thống"><i class="ph-bold ph-cloud-arrow-up"></i></button>
@@ -24,22 +24,10 @@
 
         <div class="control-divider"></div>
 
-        <button onclick="toggleDebug()" title="Cài đặt giao diện & hiển thị"><i class="ph-bold ph-gear"></i> Cài đặt</button>
+        <button class="btn-icon" onclick="toggleDebug()" title="Cài đặt giao diện & hiển thị"><i class="ph-bold ph-gear"></i></button>
 
-        {% if user.is_authenticated %}
-        <div class="control-divider"></div>
-        <div class="user-dropdown position-relative ml-2">
-            <button class="user-btn-toggle" onclick="document.getElementById('userMenu').classList.toggle('show')">
-                <i class="ph-bold ph-user"></i> {{ user.username }} ▾
-            </button>
-            <div id="userMenu" class="dropdown-content user-menu-dropdown">
-                <a href="{% url 'profile' %}" class="user-menu-item">Hồ sơ</a>
-                <form action="{% url 'logout' %}" method="post" class="m-0">
-                    {% csrf_token %}
-                    <button type="submit" class="btn-logout">Đăng xuất</button>
-                </form>
-            </div>
-        </div>
-        {% endif %}
+        <a href="{% url 'profile' %}" class="btn-icon" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center;" title="Cài đặt nâng cao, phím tắt & Templates">
+            <i class="ph-bold ph-sliders-horizontal"></i>
+        </a>
     </div>
 </div>

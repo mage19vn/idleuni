@@ -1,7 +1,7 @@
 {% extends 'compiler/base.html' %}
 {% load static %}
 
-{% block title %}Hồ sơ của tôi - Unicorns Compiler{% endblock %}
+{% block title %}Cài đặt nâng cao - Uni Compiler{% endblock %}
 
 {% block body_class %}scroll-page{% endblock %}
 
@@ -14,11 +14,11 @@
     <!-- Breadcrumb Header -->
     <div class="dash-header">
         <div class="dash-title">
-            <a href="{% url 'index' %}" class="logo text-decoration-none text-inherit"><span>[ / ]</span> Unicorns Compiler</a>
+            <a href="{% url 'index' %}" class="logo text-decoration-none text-inherit"><span>[ / ]</span> Uni Compiler</a>
         </div>
         <div class="dash-actions">
             <a href="{% url 'index' %}">← Trang chủ</a>
-            <span class="badge-role">Hồ sơ</span>
+            <span class="badge-role">Cài đặt nâng cao</span>
         </div>
     </div>
 
@@ -27,9 +27,8 @@
     <div class="dash-main">
         <!-- Sidebar -->
         <div class="dash-sidebar">
-            <div class="profile-name">{% if user.first_name %}{{ user.first_name }} {{ user.last_name }}{% else %}{{ user.username }}{% endif %}</div>
-            <div class="profile-desc">Hồ sơ — chuyên môn và cấu hình hệ thống.</div>
-            <a href="{% url 'password_change' %}" class="btn-reset-pw mt-3">Đặt lại mật khẩu</a>
+            <div class="profile-name">Cài đặt nâng cao</div>
+            <div class="profile-desc">Quản lý Theme, Phím tắt, Snippets và Templates.</div>
         </div>
 
         <!-- Content Area -->
@@ -49,38 +48,16 @@
                     <div class="info-section">
                         <div class="info-header">
                             <div class="info-title">
-                                <h3>Thông tin chung</h3>
-                                <span>Tài khoản và liên hệ cơ bản</span>
+                                <h3>Thông tin thiết bị</h3>
+                                <span>Định danh thiết bị hiện tại</span>
                             </div>
-                            <button type="submit" class="btn-edit">Chỉnh sửa</button>
                         </div>
                         <div class="data-table">
                             <div class="data-row">
-                                <div class="data-label">Tên đăng nhập</div>
+                                <div class="data-label">Địa chỉ IP nhận diện</div>
                                 <div class="data-value">
-                                    {{ u_form.username }}
-                                    {% for error in u_form.username.errors %}<div class="error-text">{{ error }}</div>{% endfor %}
-                                </div>
-                            </div>
-                            <div class="data-row">
-                                <div class="data-label">Tên</div>
-                                <div class="data-value">
-                                    {{ u_form.last_name }}
-                                    {% for error in u_form.last_name.errors %}<div class="error-text">{{ error }}</div>{% endfor %}
-                                </div>
-                            </div>
-                            <div class="data-row">
-                                <div class="data-label">Họ và Tên lót</div>
-                                <div class="data-value">
-                                    {{ u_form.first_name }}
-                                    {% for error in u_form.first_name.errors %}<div class="error-text">{{ error }}</div>{% endfor %}
-                                </div>
-                            </div>
-                            <div class="data-row">
-                                <div class="data-label">Email liên hệ</div>
-                                <div class="data-value">
-                                    {{ u_form.email }}
-                                    {% for error in u_form.email.errors %}<div class="error-text">{{ error }}</div>{% endfor %}
+                                    <input type="text" value="{{ ip_address }}" readonly class="opacity-50 cursor-not-allowed" style="width: 100%; padding: 8px;">
+                                    <div class="error-text">Hệ thống lưu trữ cấu hình và code thông qua IP thiết bị.</div>
                                 </div>
                             </div>
                         </div>

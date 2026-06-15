@@ -1,6 +1,6 @@
-# Unicorns IDE - Nền tảng Trình biên dịch & Mô phỏng Code
+# Uni IDE - Nền tảng Trình biên dịch & Mô phỏng Code
 
-Unicorns IDE là một trình biên dịch và mô phỏng thực thi mã nguồn (Visualizer) mạnh mẽ, hỗ trợ Python và C++. Hệ thống được thiết kế linh hoạt với kiến trúc Asynchronous Message Queue (Hàng đợi bất đồng bộ) giúp chịu tải cao.
+Uni IDE là một trình biên dịch và mô phỏng thực thi mã nguồn (Visualizer) mạnh mẽ, hỗ trợ Python và C++. Hệ thống được thiết kế linh hoạt với kiến trúc Asynchronous Message Queue (Hàng đợi bất đồng bộ) giúp chịu tải cao.
 
 ---
 
