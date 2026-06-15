@@ -59,4 +59,3 @@ services:
 volumes:
   postgres_data:
   sandbox_data:
-    name: unicorns_sandbox_data

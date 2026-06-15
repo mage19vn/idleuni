@@ -11,6 +11,26 @@ from Crypto.Util.Padding import unpad
 SECRET_KEY_AES = b'12345678901234567890123456789012'
 IV_AES = b'1234567890123456'
 
+import socket
+
+SANDBOX_VOLUME_NAME = None
+def get_sandbox_volume_name():
+    global SANDBOX_VOLUME_NAME
+    if SANDBOX_VOLUME_NAME: return SANDBOX_VOLUME_NAME
+    try:
+        cid = socket.gethostname()
+        out = subprocess.run(["docker", "inspect", cid, "--format", "{{json .Mounts}}"], capture_output=True, text=True).stdout
+        import json
+        mounts = json.loads(out)
+        for m in mounts:
+            if m.get("Destination") == "/sandbox_data":
+                SANDBOX_VOLUME_NAME = m.get("Name")
+                return SANDBOX_VOLUME_NAME
+    except Exception:
+        pass
+    SANDBOX_VOLUME_NAME = "sandbox_data"
+    return SANDBOX_VOLUME_NAME
+
 from django.core.exceptions import RequestDataTooBig
 
 def get_decrypted_data(request):
@@ -122,7 +142,7 @@ def trace_python(code: str, inputs: str):
 
         is_docker = os.path.exists('/sandbox_data')
         if is_docker:
-            vol_args = ["-v", "unicorns_sandbox_data:/sandbox_data", "-w", temp_dir]
+            vol_args = ["-v", f"{get_sandbox_volume_name()}:/sandbox_data", "-w", temp_dir]
         else:
             vol_args = ["-v", f"{temp_dir}:/sandbox", "-w", "/sandbox"]
 
@@ -183,7 +203,7 @@ def trace_cpp(code: str, inputs: str):
 
         is_docker = os.path.exists('/sandbox_data')
         if is_docker:
-            vol_args = ["-v", "unicorns_sandbox_data:/sandbox_data", "-w", temp_dir]
+            vol_args = ["-v", f"{get_sandbox_volume_name()}:/sandbox_data", "-w", temp_dir]
         else:
             vol_args = ["-v", f"{temp_dir}:/sandbox", "-w", "/sandbox"]
 
