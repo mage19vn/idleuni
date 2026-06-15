@@ -29,7 +29,7 @@ class Profile(models.Model):
         ("'Source Code Pro', monospace", 'Source Code Pro'),
     ]
     
-    ip_address = models.GenericIPAddressField(unique=True, verbose_name="IP Address")
+    session_id = models.CharField(max_length=100, unique=True, verbose_name="Session ID")
     display_name = models.CharField(max_length=50, default=generate_random_uni_name, verbose_name="Tên tác giả")
     bio = models.TextField(max_length=500, blank=True, null=True, verbose_name="Mô tả cơ bản")
     default_language = models.CharField(max_length=20, choices=LANG_CHOICES, default='python', verbose_name="Ngôn ngữ mặc định")
@@ -39,12 +39,12 @@ class Profile(models.Model):
     editor_font_size = models.IntegerField(default=14, verbose_name="Cỡ chữ Editor")
 
     def __str__(self):
-        return f"Profile - {self.ip_address}"
+        return f"Profile - {self.session_id}"
 
 class CodeSnippet(models.Model):
     hash_id = models.CharField(max_length=8, unique=True, db_index=True)
     content_hash = models.CharField(max_length=64, db_index=True, blank=True, null=True)
-    author_ip = models.GenericIPAddressField(null=True, blank=True, verbose_name="Author IP")
+    session_id = models.CharField(max_length=100, null=True, blank=True, verbose_name="Session ID")
     title = models.CharField(max_length=100, default='Không tên')
     is_public = models.BooleanField(default=True)
     language = models.CharField(max_length=20)
@@ -57,17 +57,17 @@ class CodeSnippet(models.Model):
         return f"{self.title} ({self.hash_id}) - {self.language}"
 
 class CodeTemplate(models.Model):
-    author_ip = models.GenericIPAddressField(verbose_name="Author IP")
+    session_id = models.CharField(max_length=100, verbose_name="Session ID")
     name = models.CharField(max_length=50)
     language = models.CharField(max_length=20, choices=[('python', 'Python'), ('cpp', 'C++'), ('all', 'All')])
     code = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('author_ip', 'name', 'language')
+        unique_together = ('session_id', 'name', 'language')
 
     def __str__(self):
-        return f"{self.author_ip} - {self.name} ({self.language})"
+        return f"{self.session_id} - {self.name} ({self.language})"
 
 class KeymapTemplate(models.Model):
     hash_id = models.CharField(max_length=8, unique=True, db_index=True)

@@ -240,3 +240,27 @@ function handleContextMenuAction(action, url = null) {
         }
     }
 }
+
+// ==========================================
+// PAYLOAD ENCRYPTION (AES-256)
+// ==========================================
+window.encryptPayload = function(dataObj) {
+    if (typeof CryptoJS === 'undefined') {
+        console.warn("CryptoJS chưa load, gửi dưới dạng Plaintext.");
+        return JSON.stringify(dataObj);
+    }
+    try {
+        const jsonStr = JSON.stringify(dataObj);
+        const key = CryptoJS.enc.Utf8.parse('12345678901234567890123456789012');
+        const iv = CryptoJS.enc.Utf8.parse('1234567890123456');
+        const encrypted = CryptoJS.AES.encrypt(CryptoJS.enc.Utf8.parse(jsonStr), key, {
+            iv: iv,
+            mode: CryptoJS.mode.CBC,
+            padding: CryptoJS.pad.Pkcs7
+        });
+        return JSON.stringify({ payload: encrypted.toString() });
+    } catch (e) {
+        console.error("Lỗi mã hóa:", e);
+        return JSON.stringify(dataObj);
+    }
+};

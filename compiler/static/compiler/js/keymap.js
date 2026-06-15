@@ -194,8 +194,11 @@ async function saveKeymapToCloud(e) {
     try {
         const res = await fetch("/api/keymap/save/", {
             method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": window.csrfToken
+            },
+            body: window.encryptPayload({
                 keymap_data: currentKeymap,
                 name: "Custom Template"
             })

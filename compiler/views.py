@@ -4,6 +4,27 @@ import io
 import tempfile
 import subprocess
 import json
+import base64
+from Crypto.Cipher import AES
+from Crypto.Util.Padding import unpad
+
+SECRET_KEY_AES = b'12345678901234567890123456789012'
+IV_AES = b'1234567890123456'
+
+def get_decrypted_data(request):
+    try:
+        body = json.loads(request.body)
+        if 'payload' in body:
+            encrypted_b64 = body['payload']
+            encrypted_bytes = base64.b64decode(encrypted_b64)
+            cipher = AES.new(SECRET_KEY_AES, AES.MODE_CBC, IV_AES)
+            decrypted_bytes = unpad(cipher.decrypt(encrypted_bytes), AES.block_size)
+            return json.loads(decrypted_bytes.decode('utf-8'))
+        return body
+    except Exception as e:
+        print('Decrypt Error:', e)
+        return {}
+
 import time
 import re
 import ast
@@ -12,7 +33,24 @@ import secrets
 import hashlib
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, Http404
-from django.views.decorators.csrf import csrf_exempt
+
+from django.core.cache import cache
+from functools import wraps
+
+def rate_limit(limit=10, window=60):
+    def decorator(view_func):
+        @wraps(view_func)
+        def _wrapped_view(request, *args, **kwargs):
+            session_id = get_client_session(request)
+            key = f"rate_limit:{view_func.__name__}:{session_id}"
+            count = cache.get(key, 0)
+            if count >= limit:
+                return JsonResponse({"success": False, "error": "Thao tác quá nhanh. Vui lòng chậm lại!"}, status=429)
+            cache.set(key, count + 1, timeout=window)
+            return view_func(request, *args, **kwargs)
+        return _wrapped_view
+    return decorator
+
 from django.conf import settings
 from .models import Profile, CodeSnippet, CodeTemplate, KeymapTemplate
 from .forms import ProfileUpdateForm
@@ -25,57 +63,15 @@ try:
 except ImportError:
     HAS_RESOURCE = False
 
-def get_client_ip(request):
-    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-    if x_forwarded_for:
-        ip = x_forwarded_for.split(',')[0].strip()
-    else:
-        ip = request.META.get('REMOTE_ADDR')
-    return ip
+def get_client_session(request):
+    if not request.session.session_key:
+        request.session.create()
+    return request.session.session_key
 
 def is_safe_python_code(code: str) -> str:
-    try:
-        tree = ast.parse(code)
-    except SyntaxError:
-        return "Lỗi cú pháp Python."
-
-    forbidden_modules = {'os', 'sys', 'subprocess', 'pty', 'socket', 'urllib', 'requests', 'importlib', 'builtins'}
-    forbidden_functions = {'eval', 'exec', 'open', '__import__', 'compile', 'globals', 'locals', 'getattr', 'setattr', 'delattr'}
-
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Import):
-            for alias in node.names:
-                if alias.name.split('.')[0] in forbidden_modules:
-                    return f"Bảo mật: Không được phép import module '{alias.name}'"
-
-        elif isinstance(node, ast.ImportFrom):
-            if node.module and node.module.split('.')[0] in forbidden_modules:
-                return f"Bảo mật: Không được phép import từ module '{node.module}'"
-
-        elif isinstance(node, ast.Call):
-            if isinstance(node.func, ast.Name):
-                if node.func.id in forbidden_functions:
-                    return f"Bảo mật: Không được phép sử dụng hàm '{node.func.id}()'"
-            elif isinstance(node.func, ast.Attribute):
-                if node.func.attr in forbidden_functions:
-                    return f"Bảo mật: Không được phép gọi thuộc tính hoặc hàm '{node.func.attr}'"
     return None
 
 def is_safe_cpp_code(code: str) -> str:
-    code_no_comments = re.sub(r'//.*|/\*[\s\S]*?\*/', '', code)
-    forbidden_patterns = [
-        r'#include\s*[<"]\s*cstdlib\s*[>"]', 
-        r'#include\s*[<"]\s*stdlib\.h\s*[>"]',
-        r'#include\s*[<"]\s*unistd\.h\s*[>"]', 
-        r'#include\s*[<"]\s*windows\.h\s*[>"]',
-        r'#include\s*[<"]\s*sys/socket\.h\s*[>"]', 
-        r'#include\s*[<"]\s*fstream\s*[>"]',
-        r'\bsystem\s*\(', r'\bpopen\s*\(', r'\bfork\s*\(', r'\bexec\w*\s*\(',
-        r'\bremove\s*\(', r'\brename\s*\('
-    ]
-    for pattern in forbidden_patterns:
-        if re.search(pattern, code_no_comments, re.IGNORECASE):
-            return "Bảo mật: Mã C++ chứa thư viện/lệnh không an toàn (vd: system(), file I/O)."
     return None
 
 def set_resource_limits():
@@ -111,17 +107,16 @@ def trace_python(code: str, inputs: str):
         with open(user_code_path, "w", encoding="utf-8") as f:
             f.write(code)
 
-        import shutil
         tracer_source_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "python_tracer.py")
-        tracer_path = os.path.join(temp_dir, "tracer.py")
-        shutil.copy2(tracer_source_path, tracer_path)
 
         try:
-            python_exe = "python" if os.name == 'nt' else "python3"
             subprocess.run(
-                [python_exe, "tracer.py"], cwd=temp_dir, input=inputs, timeout=3,
-                capture_output=True, text=True, env=get_safe_env(),
-                preexec_fn=set_resource_limits if HAS_RESOURCE and os.name != 'nt' else None
+                ["docker", "run", "--rm", "--network", "none", 
+                 "-v", f"{temp_dir}:/sandbox", 
+                 "-v", f"{tracer_source_path}:/opt/tracer.py:ro",
+                 "-i", "unicorns-python:latest", "python", "/opt/tracer.py"],
+                cwd=temp_dir, input=inputs, timeout=5,
+                capture_output=True, text=True
             )
         except subprocess.TimeoutExpired:
             return {"trace": [], "output": "", "error": "Chương trình Python kẹt vòng lặp vô hạn hoặc chờ input quá lâu."}
@@ -167,8 +162,8 @@ def trace_cpp(code: str, inputs: str):
         with open(os.path.join(temp_dir, "input.txt"), "w", encoding="utf-8") as f: f.write(inputs)
 
         compile_process = subprocess.run(
-            ["g++", "-g", "-O0", cpp_name, "-o", exe_name],
-            cwd=temp_dir, capture_output=True, text=True, env=get_safe_env()
+            ["docker", "run", "--rm", "--network", "none", "-v", f"{temp_dir}:/sandbox", "unicorns-cpp:latest", "g++", "-g", "-O0", cpp_name, "-o", exe_name],
+            cwd=temp_dir, capture_output=True, text=True
         )
         
         if compile_process.returncode != 0:
@@ -181,23 +176,10 @@ def trace_cpp(code: str, inputs: str):
         start_time = time.perf_counter()
         
         try:
-            if HAS_RESOURCE and os.name != 'nt':
-                try:
-                    exec_process = subprocess.run(
-                        ["/usr/bin/time", "-f", "%M", exe_path], cwd=temp_dir, input=inputs, timeout=2, 
-                        capture_output=True, text=True, env=get_safe_env(), preexec_fn=set_resource_limits
-                    )
-                    if exec_process.stderr:
-                        lines = exec_process.stderr.strip().split('\n')
-                        try:
-                            memory_kb = float(lines[-1])
-                            exec_process.stderr = '\n'.join(lines[:-1]) 
-                        except ValueError: pass
-                except FileNotFoundError:
-                    exec_process = subprocess.run([exe_path], cwd=temp_dir, input=inputs, timeout=2, env=get_safe_env(), capture_output=True, text=True, preexec_fn=set_resource_limits)
-            else:
-                exec_process = subprocess.run([exe_path], cwd=temp_dir, input=inputs, timeout=2, env=get_safe_env(), capture_output=True, text=True)
-                
+            exec_process = subprocess.run(
+                ["docker", "run", "--rm", "--network", "none", "-v", f"{temp_dir}:/sandbox", "-i", "unicorns-cpp:latest", f"./{exe_name}"],
+                cwd=temp_dir, input=inputs, timeout=3, capture_output=True, text=True
+            )
             end_time = time.perf_counter()
             time_ms = round((end_time - start_time) * 1000, 2)
         except subprocess.TimeoutExpired:
@@ -219,14 +201,14 @@ def trace_cpp(code: str, inputs: str):
                 f.write(instrumented_code)
                 
             trace_compile = subprocess.run(
-                ["g++", "-g", "-O0", inst_cpp_name, "-o", inst_exe_name],
-                cwd=temp_dir, capture_output=True, text=True, env=get_safe_env()
+                ["docker", "run", "--rm", "--network", "none", "-v", f"{temp_dir}:/sandbox", "unicorns-cpp:latest", "g++", "-g", "-O0", inst_cpp_name, "-o", inst_exe_name],
+                cwd=temp_dir, capture_output=True, text=True
             )
             
             if trace_compile.returncode == 0:
                 subprocess.run(
-                    [os.path.join(temp_dir, inst_exe_name)],
-                    cwd=temp_dir, input=inputs, timeout=3, capture_output=True, text=True, env=get_safe_env()
+                    ["docker", "run", "--rm", "--network", "none", "-v", f"{temp_dir}:/sandbox", "-i", "unicorns-cpp:latest", f"./{inst_exe_name}"],
+                    cwd=temp_dir, input=inputs, timeout=5, capture_output=True, text=True
                 )
             else:
                 with open("debug_trace.txt", "a", encoding="utf-8") as f:
@@ -259,8 +241,8 @@ def trace_cpp(code: str, inputs: str):
 # --- VIEW CỦA DJANGO ---
 
 def profile_view(request):
-    ip = get_client_ip(request)
-    profile, created = Profile.objects.get_or_create(ip_address=ip)
+    session_id = get_client_session(request)
+    profile, created = Profile.objects.get_or_create(session_id=session_id)
         
     if request.method == 'POST':
         form_type = request.POST.get('form_type', 'ide_settings')
@@ -284,12 +266,12 @@ def profile_view(request):
         
     context = {
         'p_form': p_form,
-        'ip_address': ip
+        'session_id': session_id
     }
     return render(request, 'compiler/profile.html', context)
 
 def index_view(request):
-    ip = get_client_ip(request)
+    session_id = get_client_session(request)
     snippet_id = request.GET.get('snippet')
     code_content = None
     input_content = None
@@ -308,7 +290,7 @@ def index_view(request):
             pass
 
     user_templates = []
-    tpls = CodeTemplate.objects.filter(author_ip=ip)
+    tpls = CodeTemplate.objects.filter(session_id=session_id)
     for t in tpls:
         user_templates.append({
             "name": t.name,
@@ -316,31 +298,31 @@ def index_view(request):
             "code": t.code
         })
 
-    profile, _ = Profile.objects.get_or_create(ip_address=ip)
+    profile, _ = Profile.objects.get_or_create(session_id=session_id)
 
     return render(request, 'compiler/index.html', {
         'snippet_code': code_content,
         'snippet_input': input_content,
         'snippet_lang': language,
         'user_templates': user_templates,
-        'ip_address': ip,
+        'session_id': session_id,
         'profile': profile
     })
 
 def report_view(request):
-    ip = get_client_ip(request)
-    profile, _ = Profile.objects.get_or_create(ip_address=ip)
-    return render(request, 'compiler/report.html', {'ip_address': ip, 'profile': profile})
+    session_id = get_client_session(request)
+    profile, _ = Profile.objects.get_or_create(session_id=session_id)
+    return render(request, 'compiler/report.html', {'session_id': session_id, 'profile': profile})
 
 def view_snippet(request, hash_id):
-    ip = get_client_ip(request)
+    session_id = get_client_session(request)
     snippet = CodeSnippet.objects.filter(hash_id=hash_id).first()
     
     is_accessible = False
     if snippet:
         if snippet.is_public:
             is_accessible = True
-        elif snippet.author_ip == ip:
+        elif snippet.session_id == session_id:
             is_accessible = True
 
     if not is_accessible:
@@ -353,11 +335,11 @@ def view_snippet(request, hash_id):
                 self.is_public = False
                 self.input_text = ""
         
-        profile, _ = Profile.objects.get_or_create(ip_address=ip)
+        profile, _ = Profile.objects.get_or_create(session_id=session_id)
         return render(request, 'compiler/review.html', {
             'snippet': DummySnippet(hash_id),
             'code_content': "// Đây là code private hoặc hoàn toàn không có link này",
-            'ip_address': ip,
+            'session_id': session_id,
             'profile': profile
         })
 
@@ -367,29 +349,36 @@ def view_snippet(request, hash_id):
             compressed_code = f.read()
         code_content = zlib.decompress(compressed_code).decode('utf-8')
         
-    profile, _ = Profile.objects.get_or_create(ip_address=ip)
-    author_profile = Profile.objects.filter(ip_address=snippet.author_ip).first() if snippet.author_ip else None
+    profile, _ = Profile.objects.get_or_create(session_id=session_id)
+    author_profile = Profile.objects.filter(session_id=snippet.session_id).first() if snippet.session_id else None
 
     return render(request, 'compiler/review.html', {
         'snippet': snippet,
         'code_content': code_content,
-        'ip_address': ip,
+        'session_id': session_id,
         'profile': profile,
         'author_profile': author_profile
     })
 
-@csrf_exempt
+@rate_limit(limit=10, window=60)
 def save_snippet_api(request):
     if request.method == "POST":
         try:
-            ip = get_client_ip(request)
-            data = json.loads(request.body)
+            session_id = get_client_session(request)
+            data = get_decrypted_data(request)
             code = data.get('code', '')
             language = data.get('language', 'python')
             input_text = data.get('inputs', '')
             existing_hash = data.get('hash_id')
             title = data.get('title', 'Không tên')
             is_public = data.get('is_public', True)
+            
+            if len(code) > 50000:
+                return JsonResponse({"success": False, "error": "Code quá dài (tối đa 50KB)."})
+            if len(input_text) > 10000:
+                return JsonResponse({"success": False, "error": "Input quá dài (tối đa 10KB)."})
+            if len(title) > 255:
+                return JsonResponse({"success": False, "error": "Tiêu đề quá dài."})
 
             current_hash = hashlib.sha256(f"{language}|{input_text}|{code}".encode('utf-8')).hexdigest()
             
@@ -397,13 +386,13 @@ def save_snippet_api(request):
             if existing_hash:
                 try:
                     existing_snippet = CodeSnippet.objects.get(hash_id=existing_hash)
-                    if existing_snippet.author_ip == ip:
+                    if existing_snippet.session_id == session_id:
                         snippet = existing_snippet
                 except CodeSnippet.DoesNotExist:
                     pass
             
             if not snippet:
-                existing_identical = CodeSnippet.objects.filter(content_hash=current_hash, author_ip=ip).first()
+                existing_identical = CodeSnippet.objects.filter(content_hash=current_hash, session_id=session_id).first()
                 if existing_identical:
                     if 'title' in data:
                         existing_identical.title = data['title']
@@ -415,7 +404,7 @@ def save_snippet_api(request):
             if not snippet:
                 snippet = CodeSnippet()
                 snippet.hash_id = secrets.token_hex(4)
-                snippet.author_ip = ip
+                snippet.session_id = session_id
                 snippet.title = data.get('title', 'Không tên')
                 snippet.is_public = data.get('is_public', True)
             else:
@@ -447,14 +436,21 @@ def save_snippet_api(request):
     
     return JsonResponse({'error': 'Method not allowed'}, status=405)
 
-@csrf_exempt 
+@rate_limit(limit=5, window=10)
 def visualize_api(request):
     if request.method == "POST":
         try:
-            data = json.loads(request.body)
+            data = get_decrypted_data(request)
             language = data.get("language")
             code = data.get("code")
             inputs = data.get("inputs", "")
+            
+            if code is None: code = ""
+            if inputs is None: inputs = ""
+            if len(code) > 50000:
+                return JsonResponse({"error": "Code quá dài (tối đa 50KB).", "trace": [], "output": ""})
+            if len(inputs) > 10000:
+                return JsonResponse({"error": "Input quá dài (tối đa 10KB).", "trace": [], "output": ""})
 
             from django.conf import settings
             from .tasks import trace_code_task
@@ -471,7 +467,6 @@ def visualize_api(request):
     return JsonResponse({"error": "Method not allowed"}, status=405)
 
 from celery.result import AsyncResult
-@csrf_exempt
 def task_status_api(request, task_id):
     try:
         task = AsyncResult(task_id)
@@ -491,11 +486,10 @@ def task_status_api(request, task_id):
     
     return JsonResponse({"error": "Method not allowed"}, status=405)
 
-@csrf_exempt
 def templates_api(request):
-    ip = get_client_ip(request)
+    session_id = get_client_session(request)
     if request.method == "GET":
-        templates = CodeTemplate.objects.filter(author_ip=ip)
+        templates = CodeTemplate.objects.filter(session_id=session_id)
         data = []
         for t in templates:
             data.append({
@@ -508,7 +502,7 @@ def templates_api(request):
         
     elif request.method == "POST":
         try:
-            data = json.loads(request.body)
+            data = get_decrypted_data(request)
             name = data.get("name")
             language = data.get("language")
             code = data.get("code")
@@ -517,7 +511,7 @@ def templates_api(request):
                 return JsonResponse({"error": "Missing fields"}, status=400)
                 
             template, created = CodeTemplate.objects.update_or_create(
-                author_ip=ip,
+                session_id=session_id,
                 name=name,
                 language=language,
                 defaults={"code": code}
@@ -528,20 +522,19 @@ def templates_api(request):
             
     elif request.method == "DELETE":
         try:
-            data = json.loads(request.body)
+            data = get_decrypted_data(request)
             t_id = data.get("id")
-            CodeTemplate.objects.filter(id=t_id, author_ip=ip).delete()
+            CodeTemplate.objects.filter(id=t_id, session_id=session_id).delete()
             return JsonResponse({"success": True})
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
 
     return JsonResponse({"error": "Method not allowed"}, status=405)
 
-@csrf_exempt
 def snippets_api(request):
-    ip = get_client_ip(request)
+    session_id = get_client_session(request)
     if request.method == "GET":
-        snippets = CodeSnippet.objects.filter(author_ip=ip).order_by('-updated_at')
+        snippets = CodeSnippet.objects.filter(session_id=session_id).order_by('-updated_at')
         data = []
         for s in snippets:
             data.append({
@@ -556,12 +549,12 @@ def snippets_api(request):
         
     elif request.method == "PUT":
         try:
-            data = json.loads(request.body)
+            data = get_decrypted_data(request)
             hash_id = data.get("hash_id")
             title = data.get("title")
             is_public = data.get("is_public")
             
-            snippet = CodeSnippet.objects.get(hash_id=hash_id, author_ip=ip)
+            snippet = CodeSnippet.objects.get(hash_id=hash_id, session_id=session_id)
             if title is not None:
                 snippet.title = title
             if is_public is not None:
@@ -575,9 +568,9 @@ def snippets_api(request):
 
     elif request.method == "DELETE":
         try:
-            data = json.loads(request.body)
+            data = get_decrypted_data(request)
             hash_id = data.get("hash_id")
-            snippet = CodeSnippet.objects.get(hash_id=hash_id, author_ip=ip)
+            snippet = CodeSnippet.objects.get(hash_id=hash_id, session_id=session_id)
             if os.path.exists(snippet.file_path):
                 os.remove(snippet.file_path)
             snippet.delete()
@@ -589,11 +582,10 @@ def snippets_api(request):
 
     return JsonResponse({"error": "Method not allowed"}, status=405)
 
-@csrf_exempt
 def save_keymap_api(request):
     if request.method == "POST":
         try:
-            data = json.loads(request.body)
+            data = get_decrypted_data(request)
             keymap_data = data.get("keymap_data")
             name = data.get("name", "Custom Keymap")
 
@@ -611,7 +603,6 @@ def save_keymap_api(request):
             return JsonResponse({"error": str(e)}, status=500)
     return JsonResponse({"error": "Method not allowed"}, status=405)
 
-@csrf_exempt
 def load_keymap_api(request, hash_id):
     if request.method == "GET":
         try:

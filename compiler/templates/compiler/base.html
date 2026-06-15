@@ -30,6 +30,9 @@
     <!-- Icons: Phosphor Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
+    <!-- CryptoJS for Payload Encryption -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
     <link rel="stylesheet" href="{% static 'compiler/css/style.css' %}?v=20260614">
     {% block extra_css %}{% endblock %}
     {% block extra_head %}{% endblock %}
@@ -39,6 +42,11 @@
     </script>
 </head>
 <body class="{% block body_class %}{% endblock %}">
+    {% csrf_token %}
+    <script>
+        const csrfTokenNode = document.querySelector('[name=csrfmiddlewaretoken]');
+        window.csrfToken = csrfTokenNode ? csrfTokenNode.value : '';
+    </script>
     {% if profile %}
     <script>
         // Sync profile preferences to local storage

@@ -833,8 +833,11 @@ async function runCode() {
     try {
         const fetchOptions = {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ language: lang, code: code, inputs: inputs }) 
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': window.csrfToken
+            },
+            body: window.encryptPayload({ language: lang, code: code, inputs: inputs }) 
         };
 
         const response = await fetch('/api/visualize/', fetchOptions);
@@ -1019,8 +1022,11 @@ async function saveSnippet() {
         
         const response = await fetch('/api/save_snippet/', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': window.csrfToken
+            },
+            body: window.encryptPayload(payload)
         });
         
         const result = await response.json();

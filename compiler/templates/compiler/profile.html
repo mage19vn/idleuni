@@ -6,7 +6,7 @@
 {% block body_class %}scroll-page{% endblock %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'compiler/css/profile.css' %}">
+<link rel="stylesheet" href="{% static 'compiler/css/profile.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -14,7 +14,8 @@
     <!-- Breadcrumb Header -->
     <div class="dash-header">
         <div class="dash-title">
-            <a href="{% url 'index' %}" class="logo text-decoration-none text-inherit"><span>[ / ]</span> Uni Compiler</a>
+            <a href="{% url 'index' %}" class="logo text-decoration-none text-inherit"><span>[ / ]</span> Uni
+                Compiler</a>
         </div>
         <div class="dash-actions">
             <a href="{% url 'index' %}">← Trang chủ</a>
@@ -33,13 +34,13 @@
 
         <!-- Content Area -->
         <div class="dash-content">
-            
+
             <!-- TÀI KHOẢN -->
             <div id="content-account">
                 {% if messages %}
-                    {% for message in messages %}
-                        <div class="alert-success">{{ message }}</div>
-                    {% endfor %}
+                {% for message in messages %}
+                <div class="alert-success">{{ message }}</div>
+                {% endfor %}
                 {% endif %}
 
                 <!-- Form riêng: Thông tin thiết bị + Tên tác giả -->
@@ -56,16 +57,18 @@
                         </div>
                         <div class="data-table">
                             <div class="data-row">
-                                <div class="data-label">Địa chỉ IP nhận diện</div>
+                                <div class="data-label">Phiên làm việc (Session ID)</div>
                                 <div class="data-value">
-                                    <input type="text" value="{{ ip_address }}" readonly class="opacity-50 cursor-not-allowed" style="width: 100%; padding: 8px;">
+                                    <input type="text" value="{{ session_id }}" readonly
+                                        class="opacity-50 cursor-not-allowed" style="width: 100%; padding: 8px;">
                                 </div>
                             </div>
                             <div class="data-row">
                                 <div class="data-label">Tên tác giả</div>
                                 <div class="data-value">
                                     {{ p_form.display_name }}
-                                    {% for error in p_form.display_name.errors %}<div class="error-text">{{ error }}</div>{% endfor %}
+                                    {% for error in p_form.display_name.errors %}<div class="error-text">{{ error }}
+                                    </div>{% endfor %}
                                 </div>
                             </div>
                         </div>
@@ -76,7 +79,7 @@
                 <form method="post" action="{% url 'profile' %}" id="formIDE">
                     {% csrf_token %}
                     <input type="hidden" name="form_type" value="ide_settings">
-                    
+
                     <div class="info-section">
                         <div class="info-header">
                             <div class="info-title">
@@ -90,48 +93,54 @@
                                 <div class="data-label">Ngôn ngữ mặc định</div>
                                 <div class="data-value">
                                     {{ p_form.default_language }}
-                                    {% for error in p_form.default_language.errors %}<div class="error-text">{{ error }}</div>{% endfor %}
+                                    {% for error in p_form.default_language.errors %}<div class="error-text">{{ error }}
+                                    </div>{% endfor %}
                                 </div>
                             </div>
                             <div class="data-row">
                                 <div class="data-label">Giao diện Hệ thống</div>
                                 <div class="data-value">
                                     {{ p_form.favorite_theme }}
-                                    {% for error in p_form.favorite_theme.errors %}<div class="error-text">{{ error }}</div>{% endfor %}
+                                    {% for error in p_form.favorite_theme.errors %}<div class="error-text">{{ error }}
+                                    </div>{% endfor %}
                                 </div>
                             </div>
                             <div class="data-row">
                                 <div class="data-label">Theme Code Editor</div>
                                 <div class="data-value">
                                     {{ p_form.editor_theme }}
-                                    {% for error in p_form.editor_theme.errors %}<div class="error-text">{{ error }}</div>{% endfor %}
+                                    {% for error in p_form.editor_theme.errors %}<div class="error-text">{{ error }}
+                                    </div>{% endfor %}
                                 </div>
                             </div>
                             <div class="data-row">
                                 <div class="data-label">Font chữ Code</div>
                                 <div class="data-value">
                                     {{ p_form.editor_font_family }}
-                                    {% for error in p_form.editor_font_family.errors %}<div class="error-text">{{ error }}</div>{% endfor %}
+                                    {% for error in p_form.editor_font_family.errors %}<div class="error-text">{{ error
+                                        }}</div>{% endfor %}
                                 </div>
                             </div>
                             <div class="data-row">
                                 <div class="data-label">Kích cỡ chữ Code</div>
                                 <div class="data-value">
                                     {{ p_form.editor_font_size }}
-                                    {% for error in p_form.editor_font_size.errors %}<div class="error-text">{{ error }}</div>{% endfor %}
+                                    {% for error in p_form.editor_font_size.errors %}<div class="error-text">{{ error }}
+                                    </div>{% endfor %}
                                 </div>
                             </div>
                             <div class="data-row" style="align-items: flex-start;">
                                 <div class="data-label pt-1">Tiểu sử (Bio)</div>
                                 <div class="data-value">
                                     {{ p_form.bio }}
-                                    {% for error in p_form.bio.errors %}<div class="error-text">{{ error }}</div>{% endfor %}
+                                    {% for error in p_form.bio.errors %}<div class="error-text">{{ error }}</div>{%
+                                    endfor %}
                                 </div>
                             </div>
                         </div>
                     </div>
                 </form>
-                </div>
+            </div>
 
             <!-- QUẢN LÝ TEMPLATES -->
             <div id="content-templates">
@@ -150,7 +159,7 @@
                             <button class="template-add-btn" onclick="createNewTemplate()">+ Thêm Template mới</button>
                         </div>
                         <div class="template-edit-col d-none" id="templateEditCol">
-                            
+
                             <div class="flex-row gap-sm">
                                 <div class="form-group flex-1">
                                     <label>Tên gọi tắt (vd: body)</label>
@@ -171,7 +180,8 @@
                             </div>
                             <div class="template-actions">
                                 <button class="btn-save-tpl" onclick="saveTemplate()">Lưu Template</button>
-                                <button class="btn-del-tpl d-none" id="btnDelTpl" onclick="deleteTemplate()">Xóa</button>
+                                <button class="btn-del-tpl d-none" id="btnDelTpl"
+                                    onclick="deleteTemplate()">Xóa</button>
                             </div>
                         </div>
                     </div>
@@ -205,11 +215,13 @@
                             </div>
                             <div class="form-group flex-row align-center gap-sm mt-2">
                                 <input type="checkbox" id="snpPublic" class="w-auto h-auto">
-                                <label for="snpPublic" class="m-0 cursor-pointer text-main fs-sm">Công khai (Ai có link cũng xem được)</label>
+                                <label for="snpPublic" class="m-0 cursor-pointer text-main fs-sm">Công khai (Ai có link
+                                    cũng xem được)</label>
                             </div>
                             <div class="template-actions mt-4">
                                 <button class="btn-save-tpl" onclick="saveSnippetMeta()">Lưu</button>
-                                <button class="btn-save-tpl bg-success" onclick="openSnippetCompiler()">Mở Editor</button>
+                                <button class="btn-save-tpl bg-success" onclick="openSnippetCompiler()">Mở
+                                    Editor</button>
                                 <button class="btn-save-tpl bg-info" onclick="openSnippetPreview()">Preview</button>
                                 <button class="btn-del-tpl" id="btnDelSnp" onclick="deleteSnippet()">Xóa</button>
                             </div>
@@ -227,36 +239,52 @@
                             <span>Thiết lập tổ hợp phím và đồng bộ đám mây</span>
                         </div>
                     </div>
-                    
+
                     <div style="padding: 20px;">
                         <div style="margin-bottom: 20px;">
-                            <label style="font-weight: bold; font-size: 14px; margin-bottom: 8px; display: block; color: var(--text-main);">1. Chọn Template (Bản mẫu):</label>
-                            <select id="keymapTemplateSelect" onchange="changeKeymapTemplate()" style="width: 100%; max-width: 400px; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-io); color: var(--text-main); font-family: var(--font-main);">
+                            <label
+                                style="font-weight: bold; font-size: 14px; margin-bottom: 8px; display: block; color: var(--text-main);">1.
+                                Chọn Template (Bản mẫu):</label>
+                            <select id="keymapTemplateSelect" onchange="changeKeymapTemplate()"
+                                style="width: 100%; max-width: 400px; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-io); color: var(--text-main); font-family: var(--font-main);">
                                 <option value="vscode">VS Code (Mặc định)</option>
                                 <option value="codeblocks">Code::Blocks</option>
                                 <option value="custom">Tùy chỉnh (Custom)</option>
                             </select>
                         </div>
-                        
+
                         <div style="margin-bottom: 20px;">
-                            <label style="font-weight: bold; font-size: 14px; margin-bottom: 8px; display: block; color: var(--text-main);">2. Chỉnh sửa phím tắt:</label>
-                            <div id="keymapEditorList" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; max-width: 800px; border: 1px solid var(--border); padding: 20px; border-radius: 10px; background: var(--bg-io); box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);">
+                            <label
+                                style="font-weight: bold; font-size: 14px; margin-bottom: 8px; display: block; color: var(--text-main);">2.
+                                Chỉnh sửa phím tắt:</label>
+                            <div id="keymapEditorList"
+                                style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; max-width: 800px; border: 1px solid var(--border); padding: 20px; border-radius: 10px; background: var(--bg-io); box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);">
                                 <!-- JS sẽ render các ô input vào đây -->
                             </div>
                             <div style="margin-top: 14px; max-width: 800px;">
-                                <button class="btn-edit" onclick="saveKeymapToCloud(event)" style="display: flex; align-items: center; gap: 6px;"><i class="ph-bold ph-floppy-disk"></i> Lưu Phím tắt</button>
+                                <button class="btn-edit" onclick="saveKeymapToCloud(event)"
+                                    style="display: flex; align-items: center; gap: 6px;"><i
+                                        class="ph-bold ph-floppy-disk"></i> Lưu Phím tắt</button>
                             </div>
                         </div>
 
                         <div style="border-top: 1px dashed var(--border); padding-top: 20px; max-width: 600px;">
-                            <label style="font-weight: bold; font-size: 14px; margin-bottom: 12px; display: block; color: var(--text-main);">3. Đồng bộ Đám mây (Hash ID):</label>
+                            <label
+                                style="font-weight: bold; font-size: 14px; margin-bottom: 12px; display: block; color: var(--text-main);">3.
+                                Đồng bộ Đám mây (Hash ID):</label>
                             <div style="display: flex; gap: 12px; margin-bottom: 12px;">
-                                <button class="setting-btn flex-1" onclick="saveKeymapToCloud()" style="background: var(--text-accent); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold;"><i class="ph-bold ph-cloud-arrow-up"></i> Tải lên đám mây</button>
-                                <input type="text" id="keymapHashDisplay" readonly placeholder="Mã Hash của bạn..." style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-main); font-size: 14px; text-align: center;">
+                                <button class="setting-btn flex-1" onclick="saveKeymapToCloud()"
+                                    style="background: var(--text-accent); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold;"><i
+                                        class="ph-bold ph-cloud-arrow-up"></i> Tải lên đám mây</button>
+                                <input type="text" id="keymapHashDisplay" readonly placeholder="Mã Hash của bạn..."
+                                    style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-main); font-size: 14px; text-align: center;">
                             </div>
                             <div style="display: flex; gap: 12px;">
-                                <input type="text" id="keymapHashInput" placeholder="Nhập Hash tải về..." style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-main); font-size: 14px;">
-                                <button class="setting-btn" onclick="loadKeymapFromCloud()" style="padding: 10px; border-radius: 6px; cursor: pointer; border: 1px solid var(--border); background: var(--bg-surface); color: var(--text-main); font-weight: bold;"><i class="ph-bold ph-cloud-arrow-down"></i> Tải về</button>
+                                <input type="text" id="keymapHashInput" placeholder="Nhập Hash tải về..."
+                                    style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-main); font-size: 14px;">
+                                <button class="setting-btn" onclick="loadKeymapFromCloud()"
+                                    style="padding: 10px; border-radius: 6px; cursor: pointer; border: 1px solid var(--border); background: var(--bg-surface); color: var(--text-main); font-weight: bold;"><i
+                                        class="ph-bold ph-cloud-arrow-down"></i> Tải về</button>
                             </div>
                         </div>
                     </div>
@@ -273,8 +301,8 @@
 <script src="{% static 'compiler/js/keymap.js' %}"></script>
 <script>
     let templates = [];
-    
-    document.addEventListener("DOMContentLoaded", function() {
+
+    document.addEventListener("DOMContentLoaded", function () {
         loadTemplates();
         loadSnippets();
         if (typeof renderKeymapEditor === "function") {
@@ -338,7 +366,7 @@
     function editTemplate(index, element) {
         document.querySelectorAll('#templateList .template-item').forEach(el => el.classList.remove('active'));
         element.classList.add('active');
-        
+
         const t = templates[index];
         document.getElementById('templateEditCol').style.display = 'flex';
         document.getElementById('tplId').value = t.id;
@@ -353,7 +381,7 @@
         const name = document.getElementById('tplName').value.trim();
         const lang = document.getElementById('tplLang').value;
         const code = document.getElementById('tplCode').value.trim();
-        
+
         if (!name || !code) {
             alert("Vui lòng nhập tên và nội dung template.");
             return;
@@ -362,8 +390,11 @@
         try {
             const res = await fetch('/api/templates/', {
                 method: id ? 'PUT' : 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: id ? parseInt(id) : null, name: name, language: lang, code: code })
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': window.csrfToken
+                },
+                body: window.encryptPayload({ id: id ? parseInt(id) : null, name: name, language: lang, code: code })
             });
             const data = await res.json();
             if (data.success) {
@@ -380,14 +411,17 @@
     async function deleteTemplate() {
         const id = document.getElementById('tplId').value;
         if (!id) return;
-        
+
         if (!confirm("Bạn có chắc chắn muốn xóa template này?")) return;
 
         try {
             const res = await fetch('/api/templates/', {
                 method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: parseInt(id) })
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': window.csrfToken
+                },
+                body: window.encryptPayload({ id: parseInt(id) })
             });
             const data = await res.json();
             if (data.success) {
@@ -405,7 +439,7 @@
 
     // --- SNIPPETS LOGIC ---
     let snippets = [];
-    
+
     async function loadSnippets() {
         try {
             const res = await fetch('/api/snippets/');
@@ -438,7 +472,7 @@
     function editSnippet(index, element) {
         document.querySelectorAll('#snippetList .template-item').forEach(el => el.classList.remove('active'));
         element.classList.add('active');
-        
+
         const s = snippets[index];
         document.getElementById('snippetEditCol').style.display = 'flex';
         document.getElementById('snpHashId').value = s.hash_id;
@@ -451,14 +485,17 @@
         const hashId = document.getElementById('snpHashId').value;
         const title = document.getElementById('snpTitle').value.trim();
         const isPublic = document.getElementById('snpPublic').checked;
-        
+
         if (!hashId) return;
 
         try {
             const res = await fetch('/api/snippets/', {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ hash_id: hashId, title: title, is_public: isPublic })
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': window.csrfToken
+                },
+                body: window.encryptPayload({ hash_id: hashId, title: title, is_public: isPublic })
             });
             const data = await res.json();
             if (data.success) {
@@ -475,14 +512,17 @@
     async function deleteSnippet() {
         const hashId = document.getElementById('snpHashId').value;
         if (!hashId) return;
-        
+
         if (!confirm("Bạn có chắc chắn muốn xóa Snippet này vĩnh viễn?")) return;
 
         try {
             const res = await fetch('/api/snippets/', {
                 method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ hash_id: hashId })
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': window.csrfToken
+                },
+                body: window.encryptPayload({ hash_id: hashId })
             });
             const data = await res.json();
             if (data.success) {

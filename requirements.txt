@@ -8,3 +8,4 @@ libclang
 
 celery
 redis
+pycryptodome
