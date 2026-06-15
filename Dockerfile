@@ -5,11 +5,8 @@ FROM python:3.9-slim
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-# Cài đặt môi trường compile C++, GDB, công cụ tính toán thời gian/bộ nhớ và docker CLI
+# Cài đặt Docker CLI để có thể spawn container con (Docker-in-Docker)
 RUN apt-get update && apt-get install -y \
-    g++ \
-    gdb \
-    time \
     docker.io \
     && rm -rf /var/lib/apt/lists/*
 
