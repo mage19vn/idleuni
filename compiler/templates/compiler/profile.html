@@ -57,7 +57,13 @@
                                 <div class="data-label">Địa chỉ IP nhận diện</div>
                                 <div class="data-value">
                                     <input type="text" value="{{ ip_address }}" readonly class="opacity-50 cursor-not-allowed" style="width: 100%; padding: 8px;">
-                                    <div class="error-text">Hệ thống lưu trữ cấu hình và code thông qua IP thiết bị.</div>
+                                </div>
+                            </div>
+                            <div class="data-row">
+                                <div class="data-label">Tên tác giả</div>
+                                <div class="data-value">
+                                    {{ p_form.display_name }}
+                                    {% for error in p_form.display_name.errors %}<div class="error-text">{{ error }}</div>{% endfor %}
                                 </div>
                             </div>
                         </div>

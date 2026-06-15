@@ -357,11 +357,14 @@ def view_snippet(request, hash_id):
         code_content = zlib.decompress(compressed_code).decode('utf-8')
         
     profile, _ = Profile.objects.get_or_create(ip_address=ip)
+    author_profile = Profile.objects.filter(ip_address=snippet.author_ip).first() if snippet.author_ip else None
+
     return render(request, 'compiler/review.html', {
         'snippet': snippet,
         'code_content': code_content,
         'ip_address': ip,
-        'profile': profile
+        'profile': profile,
+        'author_profile': author_profile
     })
 
 @csrf_exempt

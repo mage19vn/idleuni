@@ -1,4 +1,10 @@
 from django.db import models
+import random
+import string
+
+def generate_random_uni_name():
+    code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
+    return f"Uni_{code}"
 
 class Profile(models.Model):
     THEME_CHOICES = [
@@ -24,6 +30,7 @@ class Profile(models.Model):
     ]
     
     ip_address = models.GenericIPAddressField(unique=True, verbose_name="IP Address")
+    display_name = models.CharField(max_length=50, default=generate_random_uni_name, verbose_name="Tên tác giả")
     bio = models.TextField(max_length=500, blank=True, null=True, verbose_name="Mô tả cơ bản")
     default_language = models.CharField(max_length=20, choices=LANG_CHOICES, default='python', verbose_name="Ngôn ngữ mặc định")
     favorite_theme = models.CharField(max_length=20, choices=THEME_CHOICES, default='dark', verbose_name="Theme UI yêu thích")
