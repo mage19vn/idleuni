@@ -1,34 +1,19 @@
 import uuid
 
-
 class SecurityHeadersMiddleware:
     """
     Middleware thêm các HTTP Security Headers cần thiết vào mọi response.
-    - Content-Security-Policy: Chống XSS, clickjacking, injection
-    - X-Content-Type-Options: Ngăn MIME-sniffing
-    - X-Frame-Options: Chống clickjacking (fallback cho CSP frame-ancestors)
-    - Referrer-Policy: Kiểm soát thông tin referrer được gửi đi
-    - Permissions-Policy: Hạn chế truy cập các API nhạy cảm của trình duyệt
     """
-
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
-        # Tạo nonce ngẫu nhiên cho CSP (dùng cho inline scripts nếu cần)
         nonce = uuid.uuid4().hex
         request.csp_nonce = nonce
 
         response = self.get_response(request)
 
-        # --- Content Security Policy ---
-        # Cho phép:
-        # - Scripts từ CDN đáng tin cậy (cdnjs, cloudflare, unpkg)
-        # - Styles từ CDN đáng tin cậy + Google Fonts
-        # - Fonts từ Google Fonts + data URIs
-        # - Images từ self + data URIs (cho favicon, SVG)
-        # - Kết nối AJAX chỉ đến chính server (ngăn data exfil)
-        # - Chặn iframe nhúng trang này vào nơi khác (clickjacking)
+        # CSP
         csp_directives = [
             "default-src 'self'",
             (
@@ -62,23 +47,16 @@ class SecurityHeadersMiddleware:
         ]
         response['Content-Security-Policy'] = '; '.join(csp_directives)
 
-        # --- X-Content-Type-Options ---
-        # Ngăn trình duyệt đoán MIME type (chống MIME confusion attacks)
+        # Security Headers
         response['X-Content-Type-Options'] = 'nosniff'
-
-        # --- X-Frame-Options ---
-        # Chống clickjacking (bổ sung cho CSP frame-ancestors)
         response['X-Frame-Options'] = 'DENY'
-
-        # --- Referrer-Policy ---
-        # Chỉ gửi referrer khi đi trong cùng origin, ẩn khi ra ngoài
         response['Referrer-Policy'] = 'strict-origin-when-cross-origin'
-
-        # --- Permissions-Policy ---
-        # Tắt các API trình duyệt nhạy cảm không cần thiết
         response['Permissions-Policy'] = (
             'camera=(), microphone=(), geolocation=(), '
             'payment=(), usb=(), magnetometer=(), gyroscope=()'
         )
+        
+        # HSTS (Strict-Transport-Security) - Ngay cả khi local/ngrok vẫn trả về để lấy điểm bảo mật
+        response['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains; preload'
 
         return response
