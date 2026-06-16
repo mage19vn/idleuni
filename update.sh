@@ -15,29 +15,22 @@ fi
 
 cd "$TARGET_DIR" || exit 1
 
-echo "0. Kiem tra ket noi Git..."
+echo "0. Kiem tra va dong bo Git..."
 if [ ! -d ".git" ]; then
     echo "Thu muc chua duoc khoi tao git. Dang khoi tao..."
     git init
     git checkout -B main
 fi
 
-# Dat url cho remote origin de dam bao dung du an
+# Dam bao remote origin dung
 git remote set-url origin https://github.com/mage19vn/idleuni.git 2>/dev/null || git remote add origin https://github.com/mage19vn/idleuni.git
 
-echo "Dang day code len GitHub truoc khi deploy..."
-git add -A
-if git diff --cached --quiet; then
-    echo "Khong co thay doi moi de commit."
-else
-    TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
-    git commit -m "update: auto-deploy $TIMESTAMP"
-    if git push origin main; then
-        echo "Push thanh cong len GitHub."
-    else
-        echo "CANH BAO: Push len GitHub that bai. Tiep tuc deploy local..."
-    fi
-fi
+echo "Dang lay code moi nhat tu GitHub..."
+git fetch origin
+
+echo "Dang ghi de toan bo file local bang code tren GitHub..."
+git reset --hard origin/main
+git clean -fd
 
 echo ""
 if command -v docker-compose &> /dev/null; then
@@ -67,7 +60,6 @@ if ! docker image inspect unicorns-python:latest > /dev/null 2>&1; then
 fi
 
 echo "3. Dang khoi tao co so du lieu (Migrate)..."
-# Kiem tra va doi DB san sang (toi da 30 giay)
 echo "Dang cho database san sang..."
 for i in {1..15}; do
     if $DOCKER_CMD exec -T web python manage.py inspectdb > /dev/null 2>&1; then
@@ -78,7 +70,6 @@ for i in {1..15}; do
     sleep 2
 done
 
-# Chay migrate va bat loi neu that bai
 echo "Dang tien hanh migrate..."
 if ! $DOCKER_CMD exec -T web python manage.py migrate; then
     echo "======================================================="
