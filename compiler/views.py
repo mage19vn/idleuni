@@ -290,30 +290,50 @@ def trace_cpp(code: str, inputs: str):
 def profile_view(request):
     session_id = get_client_session(request)
     profile, created = Profile.objects.get_or_create(session_id=session_id)
-        
+    
+    # Tạo mã ID mặc định cố định dựa trên session_id
+    import hashlib
+    uni_id_hash = hashlib.md5(session_id.encode('utf-8')).hexdigest()[:8].upper()
+    uni_id = f"Uni_{uni_id_hash}"
+    
+    # Nếu tạo mới, gán tên tác giả bằng ID mặc định
+    if created or not profile.display_name:
+        profile.display_name = uni_id
+        profile.save(update_fields=['display_name'])
+
     if request.method == 'POST':
         form_type = request.POST.get('form_type', 'ide_settings')
-        p_form = ProfileUpdateForm(request.POST, instance=profile)
-
+        
         if form_type == 'display_name':
             # Chỉ lưu tên tác giả
-            if p_form['display_name'].value():
-                profile.display_name = p_form['display_name'].value()
+            new_name = request.POST.get('display_name', '').strip()
+            if new_name:
+                profile.display_name = new_name
                 profile.save(update_fields=['display_name'])
-            messages.success(request, 'Cập nhật tên tác giả thành công!')
+                messages.success(request, 'Cập nhật tên tác giả thành công!')
             return redirect('profile')
         else:
-            # Lưu toàn bộ cài đặt IDE (không gỳm display_name)
+            # Lưu cài đặt IDE, bỏ qua display_name
+            old_display_name = profile.display_name
+            p_form = ProfileUpdateForm(request.POST, instance=profile)
+            p_form.fields['display_name'].required = False
+            
             if p_form.is_valid():
-                p_form.save()
+                updated_profile = p_form.save(commit=False)
+                updated_profile.display_name = old_display_name # Giữ nguyên tên
+                updated_profile.save()
                 messages.success(request, 'Cập nhật cài đặt IDE thành công!')
                 return redirect('profile')
+            else:
+                p_form.data = p_form.data.copy()
+                p_form.data['display_name'] = old_display_name
     else:
         p_form = ProfileUpdateForm(instance=profile)
         
     context = {
         'p_form': p_form,
-        'session_id': session_id
+        'session_id': session_id,
+        'uni_id': uni_id
     }
     return render(request, 'compiler/profile.html', context)
 
