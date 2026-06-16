@@ -1,34 +1,21 @@
 #!/bin/bash
 echo "======================================================="
-echo "    DANG CAP NHAT VA KHOI DONG LAI DOCKER CONTAINER"
+echo "    DANG CAP NHAT TU GITHUB VA DEPLOY (SERVER)"
 echo "======================================================="
 echo ""
 
-# Chuyen den thu muc du an (nhan tham so 1, mac dinh la thu muc chua script hoac pwd)
 TARGET_DIR="${1:-$(pwd)}"
-echo "Dich den thu muc: $TARGET_DIR"
-
-if [ ! -d "$TARGET_DIR" ]; then
-    echo "Thu muc $TARGET_DIR khong ton tai. Dang tao moi..."
-    mkdir -p "$TARGET_DIR"
-fi
-
 cd "$TARGET_DIR" || exit 1
 
-echo "0. Kiem tra va dong bo Git..."
+echo "1. Dong bo code tu GitHub..."
 if [ ! -d ".git" ]; then
-    echo "Thu muc chua duoc khoi tao git. Dang khoi tao..."
     git init
     git checkout -B main
 fi
-
-# Dam bao remote origin dung
 git remote set-url origin https://github.com/mage19vn/idleuni.git 2>/dev/null || git remote add origin https://github.com/mage19vn/idleuni.git
 
-echo "Dang lay code moi nhat tu GitHub..."
 git fetch origin
-
-echo "Dang ghi de toan bo file local bang code tren GitHub..."
+# Ghi de toan bo thay doi local bang code moi tren github
 git reset --hard origin/main
 git clean -fd
 
@@ -39,46 +26,46 @@ else
     DOCKER_CMD="docker compose"
 fi
 
-echo "1. Dang dung cac container cu (neu co)..."
+echo "2. Dung he thong cu..."
 $DOCKER_CMD down 2>/dev/null || true
+# Lam sach them neu can thiet
 docker stop unicorns_app 2>/dev/null || true
 docker rm unicorns_app 2>/dev/null || true
 
-echo "2. Dang build va chay lai toan bo he thong..."
+echo "3. Build va khoi dong lai (Du lieu CSDL van duoc bao toan trong Volume)..."
 $DOCKER_CMD up -d --build
 
-echo "2.5. Kiem tra Sandbox Images..."
-if ! docker image inspect unicorns-cpp:latest > /dev/null 2>&1; then
-    echo "Dang tai unicorns-cpp..."
-    docker pull gcc:latest
-    docker tag gcc:latest unicorns-cpp:latest
-fi
+echo "4. Kiem tra Sandbox Images (Python, C++)..."
 if ! docker image inspect unicorns-python:latest > /dev/null 2>&1; then
     echo "Dang tai unicorns-python..."
     docker pull python:3.9-slim
     docker tag python:3.9-slim unicorns-python:latest
 fi
+if ! docker image inspect unicorns-cpp:latest > /dev/null 2>&1; then
+    echo "Dang tai unicorns-cpp..."
+    docker pull gcc:latest
+    docker tag gcc:latest unicorns-cpp:latest
+fi
 
-echo "3. Dang khoi tao co so du lieu (Migrate)..."
-echo "Dang cho database san sang..."
-for i in {1..15}; do
+echo "5. Cho Database san sang de migrate..."
+for i in {1..20}; do
     if $DOCKER_CMD exec -T web python manage.py inspectdb > /dev/null 2>&1; then
         echo "Database da san sang!"
         break
     fi
-    echo "Cho database... ($i/15)"
+    echo "Cho database... ($i/20)"
     sleep 2
 done
 
-echo "Dang tien hanh migrate..."
+echo "Dang cap nhat cau truc bang (neu co)..."
 if ! $DOCKER_CMD exec -T web python manage.py migrate; then
     echo "======================================================="
-    echo " LOI: MIGRATE THAT BAI! Kiem tra lai ket noi Database."
+    echo " LOI: MIGRATE THAT BAI!"
     echo "======================================================="
     exit 1
 fi
 
 echo ""
 echo "======================================================="
-echo "  CAP NHAT THANH CONG! Truy cap: http://localhost:8000"
+echo "  DEPLOY THANH CONG TREN SERVER!"
 echo "======================================================="
