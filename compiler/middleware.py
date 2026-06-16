@@ -13,7 +13,7 @@ class SecurityHeadersMiddleware:
 
         response = self.get_response(request)
 
-        # CSP
+        # 1. Content Security Policy (CSP)
         csp_directives = [
             "default-src 'self'",
             (
@@ -24,6 +24,7 @@ class SecurityHeadersMiddleware:
                 "https://www.youtube.com "
             ),
             (
+                # Monaco Editor requires inline styles to function properly
                 "style-src 'self' 'unsafe-inline' "
                 "https://cdnjs.cloudflare.com "
                 "https://fonts.googleapis.com "
@@ -38,25 +39,25 @@ class SecurityHeadersMiddleware:
                 "https://unpkg.com"
             ),
             "img-src 'self' data: blob: https:",
-            "connect-src 'self' https://predefine-pavement-zit.ngrok-free.dev",
+            "connect-src 'self' https://*.ngrok-free.dev",
             "worker-src 'self' blob:",
-            "frame-ancestors 'none'",
+            "frame-ancestors 'self'",
             "base-uri 'self'",
             "form-action 'self'",
             "object-src 'none'",
         ]
         response['Content-Security-Policy'] = '; '.join(csp_directives)
 
-        # Security Headers
+        # 2. Security Headers (Anti-clickjacking, MIME sniffing, HSTS)
         response['X-Content-Type-Options'] = 'nosniff'
-        response['X-Frame-Options'] = 'DENY'
+        response['X-Frame-Options'] = 'SAMEORIGIN'
         response['Referrer-Policy'] = 'strict-origin-when-cross-origin'
         response['Permissions-Policy'] = (
             'camera=(), microphone=(), geolocation=(), '
             'payment=(), usb=(), magnetometer=(), gyroscope=()'
         )
         
-        # HSTS (Strict-Transport-Security) - Ngay cả khi local/ngrok vẫn trả về để lấy điểm bảo mật
+        # HSTS
         response['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains; preload'
 
         return response
