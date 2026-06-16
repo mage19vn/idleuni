@@ -17,7 +17,7 @@ echo 1. Dang dung cac container hien tai...
 %DOCKER_CMD% down
 
 echo.
-echo 2. Dang build va khoi dong lai (Data Database duoc giu nguyen)...
+echo 2. Dang build va khoi dong lai (Bao gom API Server, DB, Redis, Celery)...
 %DOCKER_CMD% up -d --build
 
 echo.
@@ -65,6 +65,6 @@ if %errorlevel% neq 0 (
 
 echo.
 echo =======================================================
-echo   HOAN TAT! Truy cap: http://localhost:8000
+echo   HOAN TAT! API Server da chay tai: http://localhost:8000
 echo =======================================================
 pause
