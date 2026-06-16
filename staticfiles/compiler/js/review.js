@@ -8,11 +8,11 @@ function initReviewEditor(codeContent, snippetLang) {
     require(['vs/editor/editor.main'], function() {
         monaco.editor.defineTheme('unicorns-dark', {
             base: 'vs-dark', inherit: true, rules: [],
-            colors: { 'editor.background': '#1e1e2e', 'editorLineNumber.foreground': '#4b5263' }
+            colors: { 'editor.background': '#181926', 'editorLineNumber.foreground': '#475569' }
         });
         monaco.editor.defineTheme('unicorns-light', {
             base: 'vs', inherit: true, rules: [],
-            colors: { 'editor.background': '#ffffff', 'editorLineNumber.foreground': '#adb5bd' }
+            colors: { 'editor.background': '#f3f0ea', 'editorLineNumber.foreground': '#94a3b8' }
         });
 
         const isDark = document.body.classList.contains('dark-theme');
@@ -81,3 +81,40 @@ const mouseUpHandler = function () {
 };
 
 if(resizer) resizer.addEventListener('mousedown', mouseDownHandler);
+
+
+function copyReviewCode(btn) {
+    if(typeof monacoEditor !== 'undefined' && monacoEditor) {
+        const text = monacoEditor.getValue();
+        const success = () => {
+            const icon = btn.querySelector('i');
+            if(icon) {
+                icon.className = 'ph-bold ph-check';
+                icon.style.color = '#22c55e';
+                setTimeout(() => {
+                    icon.className = 'ph-bold ph-copy';
+                    icon.style.color = '';
+                }, 2000);
+            }
+        };
+        if(navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(success);
+        } else {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            textArea.style.top = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                success();
+            } catch (err) {
+                console.error('Fallback copy failed', err);
+            }
+            textArea.remove();
+        }
+    }
+}

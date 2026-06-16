@@ -21,7 +21,7 @@ let isDebugOpen = false;
 let visibleVariables = new Set();
 let currentErrorLine = -1;
 
-let isVisualizerVisible = true;
+let isVisualizerVisible = false;
 let isPrevLineVisible = true;
 
 // ==========================================
@@ -126,11 +126,11 @@ require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-e
 require(['vs/editor/editor.main'], function() {
     monaco.editor.defineTheme('unicorns-dark', {
         base: 'vs-dark', inherit: true, rules: [],
-        colors: { 'editor.background': '#1e1e2e', 'editorLineNumber.foreground': '#4b5263' }
+        colors: { 'editor.background': '#181926', 'editorLineNumber.foreground': '#475569' }
     });
     monaco.editor.defineTheme('unicorns-light', {
         base: 'vs', inherit: true, rules: [],
-        colors: { 'editor.background': '#ffffff', 'editorLineNumber.foreground': '#adb5bd' }
+        colors: { 'editor.background': '#f3f0ea', 'editorLineNumber.foreground': '#94a3b8' }
     });
 
     const isDark = document.body.classList.contains('dark-theme');
@@ -151,7 +151,7 @@ require(['vs/editor/editor.main'], function() {
     const monacoFontSize = parseInt(localStorage.getItem('editor_font_size')) || 14;
     const monacoFontFamily = localStorage.getItem('editor_font_family') || "'Consolas', 'Fira Code', monospace";
     
-    monacoEditor = monaco.editor.create(document.getElementById('editorContainer'), {
+    monacoEditor = monaco.editor.create(document.getElementById('editorDOM'), {
         value: initialCode,
         language: initialLang === 'cpp' ? 'cpp' : 'python',
         theme: monacoTheme,
@@ -162,6 +162,64 @@ require(['vs/editor/editor.main'], function() {
         scrollBeyondLastLine: false,
         padding: { top: 15 }
     });
+
+    if (typeof applyMonacoKeymap === "function") {
+        applyMonacoKeymap();
+    } else {
+        window.applyMonacoKeymap = function() {
+            if (typeof monacoEditor === 'undefined' || !monacoEditor) return;
+            function parseKeyBinding(str) {
+                if (!str) return 0;
+                let binding = 0;
+                const parts = str.split('+');
+                for (const p of parts) {
+                    if (p === 'Ctrl') binding |= monaco.KeyMod.CtrlCmd;
+                    else if (p === 'Shift') binding |= monaco.KeyMod.Shift;
+                    else if (p === 'Alt') binding |= monaco.KeyMod.Alt;
+                    else if (p === 'Meta') binding |= monaco.KeyMod.WinCtrl;
+                    else {
+                        const k = p === 'Space' ? 'Space' : p;
+                        binding |= monaco.KeyCode['Key' + k] || monaco.KeyCode[k] || 0;
+                    }
+                }
+                return binding;
+            }
+            const km = typeof currentKeymap !== 'undefined' ? currentKeymap : {};
+            const mapping = {
+                suggestCode: 'editor.action.triggerSuggest',
+                formatCode: 'editor.action.formatDocument',
+                commentLine: 'editor.action.commentLine',
+                uncommentLine: 'editor.action.commentLine',
+                indent: 'editor.action.indentLines',
+                unindent: 'editor.action.outdentLines',
+                duplicateLine: 'editor.action.copyLinesDownAction',
+                moveLineUp: 'editor.action.moveLinesUpAction',
+                moveLineDown: 'editor.action.moveLinesDownAction',
+                deleteLine: 'editor.action.deleteLines',
+                multiCursor: 'editor.action.addSelectionToNextFindMatch'
+            };
+            
+            // Vô hiệu hóa tất cả phím tắt mặc định của VS Code để không bị lọt (chỉ giữ đúng keymap hiện tại)
+            if (typeof KEYMAP_TEMPLATES !== 'undefined' && KEYMAP_TEMPLATES.vscode) {
+                for (const defaultShortcut of Object.values(KEYMAP_TEMPLATES.vscode)) {
+                    if (defaultShortcut && defaultShortcut !== 'Tab' && defaultShortcut !== 'Shift+Tab') {
+                        monacoEditor.addCommand(parseKeyBinding(defaultShortcut), () => {
+                            // Do nothing
+                        });
+                    }
+                }
+            }
+            
+            for (const [key, command] of Object.entries(mapping)) {
+                if (km[key]) {
+                    monacoEditor.addCommand(parseKeyBinding(km[key]), () => {
+                        monacoEditor.trigger('keymap', command, null);
+                    });
+                }
+            }
+        };
+        applyMonacoKeymap();
+    }
 
     if (stdInput) {
         if (window.initialSnippetInput) {
@@ -206,11 +264,28 @@ require(['vs/editor/editor.main'], function() {
         });
     }
 
-    // Thêm action Alt+J
+    // Thêm action cho phím tắt mở Menu Template
+    const tempKm = JSON.parse(localStorage.getItem('uni_keymap')) || {};
+    const scOpenTemplate = tempKm.openTemplate || 'Ctrl+J';
+    let monacoKeyMod = 0;
+    if (scOpenTemplate.includes('Ctrl')) monacoKeyMod |= monaco.KeyMod.CtrlCmd;
+    if (scOpenTemplate.includes('Alt')) monacoKeyMod |= monaco.KeyMod.Alt;
+    if (scOpenTemplate.includes('Shift')) monacoKeyMod |= monaco.KeyMod.Shift;
+    
+    let keyPart = scOpenTemplate.split('+').pop();
+    let monacoKeyCode = monaco.KeyCode.Unknown;
+    if (keyPart.length === 1 && keyPart >= 'A' && keyPart <= 'Z') {
+        monacoKeyCode = monaco.KeyCode['Key' + keyPart];
+    } else if (keyPart === 'Space') {
+        monacoKeyCode = monaco.KeyCode.Space;
+    } else {
+        monacoKeyCode = monaco.KeyCode.KeyJ; // Fallback
+    }
+
     monacoEditor.addAction({
         id: 'insert-snippet-template',
         label: 'Insert Template',
-        keybindings: [monaco.KeyMod.Alt | monaco.KeyCode.KeyJ],
+        keybindings: [monacoKeyMod | monacoKeyCode],
         run: function(ed) {
             showTemplateMenu(ed);
         }
@@ -363,7 +438,7 @@ function toggleVisualizer() {
     if (isVisualizerVisible) {
         if(paneRight) paneRight.style.display = 'flex'; 
         if(workspace) workspace.classList.remove('hide-vis'); 
-        if(btnToggleVis) btnToggleVis.innerHTML = 'Ẩn bảng Visualizer';
+        if(btnToggleVis) btnToggleVis.innerHTML = '<i class="ph-bold ph-eye-slash"></i> Ẩn bảng Visualizer';
         if (isPrevLineVisible && btnTogglePrev) btnTogglePrev.classList.remove('disabled');
         
         if(resizer) resizer.style.display = 'flex';
@@ -371,7 +446,7 @@ function toggleVisualizer() {
     } else {
         if(paneRight) paneRight.style.display = 'none'; 
         if(workspace) workspace.classList.add('hide-vis');
-        if(btnToggleVis) btnToggleVis.innerHTML = 'Hiện bảng Visualizer';
+        if(btnToggleVis) btnToggleVis.innerHTML = '<i class="ph-bold ph-eye"></i> Hiện bảng Visualizer';
         if(btnTogglePrev) btnTogglePrev.classList.add('disabled');
         
         if(resizer) resizer.style.display = 'none';
@@ -552,39 +627,24 @@ function setupTrace(traceData, fullOutput) {
     initializeDebugMenu(globalTraceData);
 
     if (globalTraceData.length > 0) {
-        if (!isVisualizerVisible) currentStepIndex = globalTraceData.length - 1;
-        else currentStepIndex = 0;
-        renderStep(currentStepIndex);
-    } else {
-        updateArrowPosition();
-        printToConsole(globalOutput);
-    }
-
-    if(runBtn) runBtn.disabled = false;
-    initializeDebugMenu(globalTraceData);
-
-    if (globalTraceData.length > 0) {
-        // --- THÊM PHẦN NÀY ---
         if (timeSlider) {
             timeSlider.max = globalTraceData.length - 1;
             timeSlider.disabled = false;
         }
-        // ---------------------
 
         if (!isVisualizerVisible) currentStepIndex = globalTraceData.length - 1;
         else currentStepIndex = 0;
         renderStep(currentStepIndex);
     } else {
-        // --- THÊM PHẦN NÀY ---
         if (timeSlider) {
             timeSlider.max = 0;
             timeSlider.value = 0;
             timeSlider.disabled = true;
         }
         if (stepCounter) stepCounter.innerText = "0/0";
-        // ---------------------
         
         updateArrowPosition();
+        if(consoleOutput) consoleOutput.innerHTML = '';
         printToConsole(globalOutput);
     }
 }
@@ -762,8 +822,10 @@ async function runCode() {
     
     if(consoleOutput) consoleOutput.innerHTML = '';
     if(visualizerArea) visualizerArea.innerHTML = '';
-    if(runBtn) runBtn.disabled = true;
-    if(loader) loader.style.display = 'inline-block';
+    if(runBtn) {
+        runBtn.disabled = true;
+        runBtn.innerHTML = '<i class="ph-bold ph-spinner spinning"></i>';
+    }
     currentErrorLine = -1;
     
     globalTraceData = [];
@@ -772,15 +834,46 @@ async function runCode() {
     try {
         const fetchOptions = {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ language: lang, code: code, inputs: inputs }) 
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': window.csrfToken
+            },
+            body: window.encryptPayload({ language: lang, code: code, inputs: inputs }) 
         };
 
         const response = await fetch('/api/visualize/', fetchOptions);
-
         if (!response.ok) throw new Error(`Server trả về lỗi: ${response.status}`);
+        const initResult = await response.json();
+        
+        if (initResult.error) {
+            throw new Error(initResult.error);
+        }
 
-        const result = await response.json();
+        let result = null;
+        if (initResult.status === "SUCCESS") {
+            result = initResult.result;
+        } else {
+            const taskId = initResult.task_id;
+            printToConsole("Đang xếp hàng đợi Server xử lý...", "system");
+
+            // Polling loop
+            while (true) {
+                await new Promise(r => setTimeout(r, 500)); // wait 500ms
+                const statusRes = await fetch(`/api/task_status/${taskId}/`);
+                if (!statusRes.ok) throw new Error(`Status lỗi: ${statusRes.status}`);
+                
+                const statusData = await statusRes.json();
+                if (statusData.status === "SUCCESS") {
+                    result = statusData.result;
+                    break;
+                } else if (statusData.status === "FAILURE") {
+                    throw new Error(statusData.error || "Lỗi khi chạy code (Worker Failure)");
+                }
+                // If PENDING or running, continue loop
+            }
+        }
+
+        if(consoleOutput) consoleOutput.innerHTML = '';
 
         if (result.time_ms !== undefined) {
             document.getElementById('timeMetric').innerText = result.time_ms.toFixed(2);
@@ -808,22 +901,56 @@ async function runCode() {
         printToConsole("⚠️ Hãy đảm bảo Backend Server đang chạy tại http://localhost:8000/api/visualize", "system");
         if(runBtn) runBtn.disabled = false;
     } finally {
-        if(loader) loader.style.display = 'none';
+        if(runBtn) {
+            runBtn.disabled = false;
+            runBtn.innerHTML = '<i class="ph-bold ph-play"></i>';
+        }
     }
 }
 
+// --- ĐỌC VÀ XỬ LÝ PHÍM TẮT ĐỘNG ---
+function checkShortcut(e, shortcutStr) {
+    if (!shortcutStr) return false;
+    const parts = shortcutStr.split('+');
+    const keyName = parts[parts.length - 1];
+    const needsCtrl = parts.includes('Ctrl');
+    const needsAlt = parts.includes('Alt');
+    const needsShift = parts.includes('Shift');
+    const needsMeta = parts.includes('Meta');
+
+    const hasCtrl = e.ctrlKey;
+    const hasAlt = e.altKey;
+    const hasShift = e.shiftKey;
+    const hasMeta = e.metaKey;
+
+    let eKey = e.key;
+    if (eKey === ' ') eKey = 'Space';
+    if (eKey.length === 1) eKey = eKey.toUpperCase();
+
+    if (eKey !== keyName) return false;
+    if (needsCtrl !== hasCtrl) return false;
+    if (needsAlt !== hasAlt) return false;
+    if (needsShift !== hasShift) return false;
+    if (needsMeta !== hasMeta) return false;
+
+    return true;
+}
+
 document.addEventListener('keydown', function(e) {
-    if (e.ctrlKey || e.metaKey) {
-        if (e.key === 'ArrowRight') {
-            e.preventDefault(); 
-            if (nextBtn && !nextBtn.disabled) nextStep();
-        } else if (e.key === 'ArrowLeft') {
-            e.preventDefault();
-            if (prevBtn && !prevBtn.disabled) prevStep();
-        } else if (e.key === 'Enter') {
-            e.preventDefault();
-            if (runBtn && !runBtn.disabled) runCode();
-        }
+    const km = typeof currentKeymap !== 'undefined' ? currentKeymap : {};
+    const scRunCode = km.runCode || 'F5';
+    const scNextStep = km.nextStep || 'Ctrl+ArrowRight';
+    const scPrevStep = km.prevStep || 'Ctrl+ArrowLeft';
+
+    if (checkShortcut(e, scRunCode)) {
+        e.preventDefault();
+        if (runBtn && !runBtn.disabled) runCode();
+    } else if (checkShortcut(e, scNextStep)) {
+        e.preventDefault();
+        if (nextBtn && !nextBtn.disabled) nextStep();
+    } else if (checkShortcut(e, scPrevStep)) {
+        e.preventDefault();
+        if (prevBtn && !prevBtn.disabled) prevStep();
     }
 });
 
@@ -877,7 +1004,11 @@ async function saveSnippet() {
     const lang = langSelect ? langSelect.value : 'python';
     const inputs = stdInput ? stdInput.value : '';
     
-    if(loader) loader.style.display = 'inline-block';
+    const saveBtn = document.getElementById('saveBtn');
+    if(saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="ph-bold ph-spinner spinning"></i>';
+    }
     
     try {
         const payload = {
@@ -892,8 +1023,11 @@ async function saveSnippet() {
         
         const response = await fetch('/api/save_snippet/', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': window.csrfToken
+            },
+            body: window.encryptPayload(payload)
         });
         
         const result = await response.json();
@@ -906,7 +1040,10 @@ async function saveSnippet() {
     } catch (err) {
         alert('Lỗi kết nối: ' + err.message);
     } finally {
-        if(loader) loader.style.display = 'none';
+        if(saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="ph-bold ph-cloud-arrow-up"></i>';
+        }
     }
 }
 
@@ -918,4 +1055,210 @@ if (timeSlider) {
         currentStepIndex = newIndex;
         renderStep(newIndex); // Tự động render lại UI khi kéo
     });
+}
+
+// --- LOGIC KÉO THẢ RESIZER ---
+document.addEventListener('DOMContentLoaded', function() {
+    const resizer = document.getElementById('resizer');
+    const leftPane = document.getElementById('leftPane');
+    const rightPane = document.getElementById('rightPane');
+    const workspace = document.getElementById('workspace');
+
+    if (!resizer || !leftPane || !rightPane || !workspace) return;
+
+    let isResizing = false;
+    let savedLeftWidth = ''; // Lưu trữ lại chiều rộng khi ẩn/hiện visualizer
+
+    resizer.addEventListener('mousedown', function(e) {
+        isResizing = true;
+        document.body.style.cursor = 'col-resize';
+        resizer.classList.add('resizer-active');
+        
+        // Tránh bị bôi đen text khi kéo
+        document.body.style.userSelect = 'none';
+        
+        // Thêm overlay để iframe/editor không cản trở event chuột
+        const overlay = document.createElement('div');
+        overlay.id = 'dragOverlay';
+        overlay.style.position = 'absolute';
+        overlay.style.top = '0';
+        overlay.style.left = '0';
+        overlay.style.width = '100%';
+        overlay.style.height = '100%';
+        overlay.style.zIndex = '9999';
+        workspace.appendChild(overlay);
+        workspace.style.position = 'relative';
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!isResizing) return;
+        
+        const workspaceRect = workspace.getBoundingClientRect();
+        let newLeftWidth = e.clientX - workspaceRect.left;
+        
+        // Chiều rộng tối thiểu để chứa đủ các nút công cụ
+        const minLeftWidth = 790; 
+        const minRightWidth = 320; 
+
+        if (newLeftWidth < minLeftWidth) newLeftWidth = minLeftWidth;
+        if (workspaceRect.width - newLeftWidth < minRightWidth) {
+            newLeftWidth = workspaceRect.width - minRightWidth;
+        }
+
+        leftPane.style.flex = `0 0 ${newLeftWidth}px`;
+        rightPane.style.flex = '1 1 0%';
+        savedLeftWidth = leftPane.style.flex;
+        
+        if (typeof monacoEditor !== 'undefined' && monacoEditor) {
+            monacoEditor.layout();
+        }
+    });
+
+    document.addEventListener('mouseup', function(e) {
+        if (isResizing) {
+            isResizing = false;
+            document.body.style.cursor = '';
+            resizer.classList.remove('resizer-active');
+            document.body.style.userSelect = '';
+            
+            const overlay = document.getElementById('dragOverlay');
+            if (overlay) overlay.remove();
+            
+            if (typeof monacoEditor !== 'undefined' && monacoEditor) {
+                monacoEditor.layout();
+            }
+        }
+    });
+
+    // --- LOGIC CHO RESIZER INTERNAL (Khi tắt Visualizer) ---
+    const resizerInternal = document.getElementById('resizerInternal');
+    const editorContainer = document.getElementById('editorContainer');
+    const ioWrapper = document.getElementById('ioWrapper');
+    let isResizingInternal = false;
+    let savedEditorFlex = ''; // Lưu trữ lại flex khi chuyển đổi
+
+    if (resizerInternal && editorContainer && ioWrapper) {
+        resizerInternal.addEventListener('mousedown', function(e) {
+            isResizingInternal = true;
+            const isHorizontal = workspace.classList.contains('hide-vis');
+            document.body.style.cursor = isHorizontal ? 'col-resize' : 'row-resize';
+            resizerInternal.classList.add('resizer-active');
+            document.body.style.userSelect = 'none';
+            
+            const overlay = document.createElement('div');
+            overlay.id = 'dragOverlayInternal';
+            overlay.style.position = 'absolute';
+            overlay.style.top = '0';
+            overlay.style.left = '0';
+            overlay.style.width = '100%';
+            overlay.style.height = '100%';
+            overlay.style.zIndex = '9999';
+            workspace.appendChild(overlay);
+        });
+
+        document.addEventListener('mousemove', function(e) {
+            if (!isResizingInternal) return;
+            const isHorizontal = workspace.classList.contains('hide-vis');
+            const parentRect = leftPane.getBoundingClientRect();
+            
+            if (isHorizontal) {
+                // Kéo thả theo chiều ngang (khi tắt Visualizer)
+                let newEditorWidth = e.clientX - parentRect.left;
+                const minEditorWidth = 790;
+                const minIOWidth = 250;
+                
+                if (newEditorWidth < minEditorWidth) newEditorWidth = minEditorWidth;
+                if (parentRect.width - newEditorWidth < minIOWidth) {
+                    newEditorWidth = parentRect.width - minIOWidth;
+                }
+                
+                editorContainer.style.flex = `0 0 ${newEditorWidth}px`;
+                ioWrapper.style.flex = '1 1 0%';
+                savedEditorFlex = editorContainer.style.flex;
+            } else {
+                // Kéo thả theo chiều dọc (khi bật Visualizer)
+                let newEditorHeight = e.clientY - parentRect.top;
+                const minEditorHeight = 100;
+                const minIOHeight = 100;
+                
+                if (newEditorHeight < minEditorHeight) newEditorHeight = minEditorHeight;
+                if (parentRect.height - newEditorHeight < minIOHeight) {
+                    newEditorHeight = parentRect.height - minIOHeight;
+                }
+                
+                editorContainer.style.flex = `0 0 ${newEditorHeight}px`;
+                ioWrapper.style.flex = '1 1 0%';
+                savedEditorFlex = editorContainer.style.flex;
+            }
+            
+            if (typeof monacoEditor !== 'undefined' && monacoEditor) {
+                monacoEditor.layout();
+            }
+        });
+
+        document.addEventListener('mouseup', function(e) {
+            if (isResizingInternal) {
+                isResizingInternal = false;
+                document.body.style.cursor = '';
+                resizerInternal.classList.remove('resizer-active');
+                document.body.style.userSelect = '';
+                
+                const overlay = document.getElementById('dragOverlayInternal');
+                if (overlay) overlay.remove();
+                
+                if (typeof monacoEditor !== 'undefined' && monacoEditor) {
+                    monacoEditor.layout();
+                }
+            }
+        });
+    }
+
+    // Sửa đè lại hàm toggleVisualizer để nhớ chiều rộng cũ nếu có
+    const originalToggleVisualizer = window.toggleVisualizer;
+    if (typeof originalToggleVisualizer === 'function') {
+        window.toggleVisualizer = function() {
+            originalToggleVisualizer();
+            // Nếu đang hiển thị Visualizer
+            if (isVisualizerVisible && savedLeftWidth) {
+                leftPane.style.flex = savedLeftWidth;
+                rightPane.style.flex = '1 1 0%';
+            }
+        };
+    }
+});
+
+function copyEditorCode(btn) {
+    if(typeof monacoEditor !== 'undefined' && monacoEditor) {
+        const text = monacoEditor.getValue();
+        const success = () => {
+            const icon = btn.querySelector('i');
+            if(icon) {
+                icon.className = 'ph-bold ph-check';
+                icon.style.color = '#22c55e';
+                setTimeout(() => {
+                    icon.className = 'ph-bold ph-copy';
+                    icon.style.color = '';
+                }, 2000);
+            }
+        };
+        if(navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(success);
+        } else {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            textArea.style.top = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                success();
+            } catch (err) {
+                console.error('Fallback copy failed', err);
+            }
+            textArea.remove();
+        }
+    }
 }

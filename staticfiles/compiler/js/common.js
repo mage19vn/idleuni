@@ -109,27 +109,34 @@ function switchThemeLogic() {
 }
 
 function toggleTheme(event) {
-    const btn = document.getElementById('themeToggleBtn');
-    if(btn) {
-        btn.classList.add('theme-animate');
-        setTimeout(() => btn.classList.remove('theme-animate'), 600);
-    }
-
     if (!document.startViewTransition) {
         switchThemeLogic();
         return;
     }
 
-    const x = event ? event.clientX : window.innerWidth / 2;
-    const y = event ? event.clientY : window.innerHeight / 2;
-    const endRadius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+    // Trạng thái HIỆN TẠI (trước khi chuyển)
+    const isDark = document.body.classList.contains('dark-theme');
 
     const transition = document.startViewTransition(() => switchThemeLogic());
 
     transition.ready.then(() => {
+        // Tối -> Sáng: Vuốt từ phải qua trái
+        const slideFromRight = [
+            'polygon(100% 0, 100% 0, 100% 100%, 100% 100%)',
+            'polygon(0% 0, 100% 0, 100% 100%, 0% 100%)'
+        ];
+        
+        // Sáng -> Tối: Vuốt từ trái qua phải
+        const slideFromLeft = [
+            'polygon(0 0, 0 0, 0 100%, 0 100%)',
+            'polygon(0 0, 100% 0, 100% 100%, 0 100%)'
+        ];
+
+        const animationFrames = isDark ? slideFromRight : slideFromLeft;
+
         document.documentElement.animate(
-            { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${endRadius}px at ${x}px ${y}px)`] },
-            { duration: 500, easing: 'ease-in-out', pseudoElement: '::view-transition-new(root)' }
+            { clipPath: animationFrames },
+            { duration: 400, easing: 'ease-in-out', pseudoElement: '::view-transition-new(root)' }
         );
     });
 }
@@ -157,6 +164,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Hệ thống chặn phím tắt DevTools (bắt ở capture phase trên Window để ưu tiên tuyệt đối)
     if (!window.isAdmin) {
         window.addEventListener('keydown', function(e) {
+            // Ưu tiên phím tắt của Code Editor (nếu trùng)
+            if (typeof checkShortcut === 'function' && typeof currentKeymap !== 'undefined') {
+                for (const val of Object.values(currentKeymap)) {
+                    if (checkShortcut(e, val)) {
+                        return; // Bypass anti-cheat
+                    }
+                }
+            }
+
             if (e.key === 'F12' || e.keyCode === 123) return showSpyModal(e);
             if (e.ctrlKey && e.shiftKey && ['I', 'J', 'C', 'i', 'j', 'c'].includes(e.key)) return showSpyModal(e);
             if (e.ctrlKey && (e.key === 'U' || e.key === 'u')) return showSpyModal(e);
@@ -224,3 +240,27 @@ function handleContextMenuAction(action, url = null) {
         }
     }
 }
+
+// ==========================================
+// PAYLOAD ENCRYPTION (AES-256)
+// ==========================================
+window.encryptPayload = function(dataObj) {
+    if (typeof CryptoJS === 'undefined') {
+        console.warn("CryptoJS chưa load, gửi dưới dạng Plaintext.");
+        return JSON.stringify(dataObj);
+    }
+    try {
+        const jsonStr = JSON.stringify(dataObj);
+        const key = CryptoJS.enc.Utf8.parse('12345678901234567890123456789012');
+        const iv = CryptoJS.enc.Utf8.parse('1234567890123456');
+        const encrypted = CryptoJS.AES.encrypt(CryptoJS.enc.Utf8.parse(jsonStr), key, {
+            iv: iv,
+            mode: CryptoJS.mode.CBC,
+            padding: CryptoJS.pad.Pkcs7
+        });
+        return JSON.stringify({ payload: encrypted.toString() });
+    } catch (e) {
+        console.error("Lỗi mã hóa:", e);
+        return JSON.stringify(dataObj);
+    }
+};

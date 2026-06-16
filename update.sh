@@ -65,6 +65,14 @@ if ! $DOCKER_CMD exec -T web python manage.py migrate; then
     exit 1
 fi
 
+echo "Dang gom file tinh (CSS/JS)..."
+if ! $DOCKER_CMD exec -T web python manage.py collectstatic --noinput; then
+    echo "======================================================="
+    echo " LOI: GOM FILE TINH THAT BAI!"
+    echo "======================================================="
+    exit 1
+fi
+
 echo ""
 echo "======================================================="
 echo "  DEPLOY THANH CONG TREN SERVER!"
