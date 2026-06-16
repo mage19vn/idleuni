@@ -81,3 +81,40 @@ const mouseUpHandler = function () {
 };
 
 if(resizer) resizer.addEventListener('mousedown', mouseDownHandler);
+
+
+function copyReviewCode(btn) {
+    if(typeof monacoEditor !== 'undefined' && monacoEditor) {
+        const text = monacoEditor.getValue();
+        const success = () => {
+            const icon = btn.querySelector('i');
+            if(icon) {
+                icon.className = 'ph-bold ph-check';
+                icon.style.color = '#22c55e';
+                setTimeout(() => {
+                    icon.className = 'ph-bold ph-copy';
+                    icon.style.color = '';
+                }, 2000);
+            }
+        };
+        if(navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(success);
+        } else {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            textArea.style.top = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                success();
+            } catch (err) {
+                console.error('Fallback copy failed', err);
+            }
+            textArea.remove();
+        }
+    }
+}
