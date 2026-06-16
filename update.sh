@@ -25,11 +25,19 @@ fi
 # Dat url cho remote origin de dam bao dung du an
 git remote set-url origin https://github.com/mage19vn/idleuni.git 2>/dev/null || git remote add origin https://github.com/mage19vn/idleuni.git
 
-echo "Dang lay code moi nhat tu Git..."
-git fetch origin
-
-echo "Dang dong bo code (ghi de moi thay doi cuc bo de dam bao sach se)..."
-git reset --hard origin/main
+echo "Dang day code len GitHub truoc khi deploy..."
+git add -A
+if git diff --cached --quiet; then
+    echo "Khong co thay doi moi de commit."
+else
+    TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+    git commit -m "update: auto-deploy $TIMESTAMP"
+    if git push origin main; then
+        echo "Push thanh cong len GitHub."
+    else
+        echo "CANH BAO: Push len GitHub that bai. Tiep tuc deploy local..."
+    fi
+fi
 
 echo ""
 if command -v docker-compose &> /dev/null; then
@@ -47,12 +55,12 @@ echo "2. Dang build va chay lai toan bo he thong..."
 $DOCKER_CMD up -d --build
 
 echo "2.5. Kiem tra Sandbox Images..."
-if ! docker image inspect unicorns-cpp:latest >/dev/null 2>&1; then
+if ! docker image inspect unicorns-cpp:latest > /dev/null 2>&1; then
     echo "Dang tai unicorns-cpp..."
     docker pull gcc:latest
     docker tag gcc:latest unicorns-cpp:latest
 fi
-if ! docker image inspect unicorns-python:latest >/dev/null 2>&1; then
+if ! docker image inspect unicorns-python:latest > /dev/null 2>&1; then
     echo "Dang tai unicorns-python..."
     docker pull python:3.9-slim
     docker tag python:3.9-slim unicorns-python:latest

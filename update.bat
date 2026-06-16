@@ -13,6 +13,23 @@ if %errorlevel% equ 0 (
     set DOCKER_CMD=docker-compose
 )
 
+echo 0. Dang day code len GitHub...
+git add -A
+git diff --cached --quiet
+if %errorlevel% equ 0 (
+    echo Khong co thay doi moi de commit.
+) else (
+    for /f "delims=" %%i in ('powershell -Command "Get-Date -Format 'yyyy-MM-dd HH:mm:ss'"') do set TIMESTAMP=%%i
+    git commit -m "update: auto-deploy %TIMESTAMP%"
+    git push origin main
+    if %errorlevel% neq 0 (
+        echo CANH BAO: Push len GitHub that bai. Tiep tuc deploy local...
+    ) else (
+        echo Push thanh cong len GitHub.
+    )
+)
+
+echo.
 echo 1. Dang dung cac container cu (neu co)...
 %DOCKER_CMD% down >NUL 2>NUL
 docker stop unicorns_app >NUL 2>NUL
@@ -23,7 +40,22 @@ echo 2. Dang build va chay lai he thong (Postgres, Redis, Web, Celery)...
 %DOCKER_CMD% up -d --build
 
 echo.
-echo 3. Dang khoi tao co so du lieu (Migrate)...
+echo 3. Dang kiem tra Sandbox Images...
+docker image inspect unicorns-cpp:latest >NUL 2>NUL
+if %errorlevel% neq 0 (
+    echo Dang tai unicorns-cpp...
+    docker pull gcc:latest
+    docker tag gcc:latest unicorns-cpp:latest
+)
+docker image inspect unicorns-python:latest >NUL 2>NUL
+if %errorlevel% neq 0 (
+    echo Dang tai unicorns-python...
+    docker pull python:3.9-slim
+    docker tag python:3.9-slim unicorns-python:latest
+)
+
+echo.
+echo 4. Dang khoi tao co so du lieu (Migrate)...
 echo Dang cho database san sang...
 set count=0
 :wait_db
