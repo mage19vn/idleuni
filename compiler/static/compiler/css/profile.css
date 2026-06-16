@@ -523,3 +523,25 @@ body.scroll-page {
         grid-template-columns: 1fr;
     }
 }
+
+/* Custom Editor Style for Textarea */
+.template-edit-col textarea {
+    background: var(--bg-editor) !important;
+    color: var(--text-main) !important;
+    border: 1px solid var(--input-border) !important;
+    padding: 15px !important;
+    font-family: var(--font-code), monospace !important;
+    border-radius: 8px !important;
+    line-height: 1.6 !important;
+    resize: vertical !important;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.05) !important;
+}
+.template-edit-col textarea:focus {
+    box-shadow: 0 0 0 3px rgba(90, 135, 250, 0.2) !important;
+    border-color: #5a87fa !important;
+}
+
+.template-edit-col select option {
+    background-color: var(--bg-panel);
+    color: var(--text-main);
+}

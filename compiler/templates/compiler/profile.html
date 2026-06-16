@@ -152,7 +152,7 @@
                             <button class="template-add-btn" onclick="createNewTemplate()">+ Thêm Template mới</button>
                         </div>
                         <div class="template-edit-col d-none" id="templateEditCol">
-
+                            <input type="hidden" id="tplId">
                             <div class="flex-row gap-sm">
                                 <div class="form-group flex-1">
                                     <label>Tên gọi tắt (vd: body)</label>
@@ -291,6 +291,7 @@
 {% block footer %}{% endblock %}
 
 {% block extra_js %}
+<script src="{% static 'compiler/js/common.js' %}"></script>
 <script src="{% static 'compiler/js/keymap.js' %}"></script>
 <script>
     let templates = [];
@@ -347,26 +348,42 @@
 
     function createNewTemplate() {
         document.querySelectorAll('#templateList .template-item').forEach(el => el.classList.remove('active'));
-        document.getElementById('templateEditCol').style.display = 'flex';
+        const editCol = document.getElementById('templateEditCol');
+        editCol.classList.remove('d-none');
+        editCol.style.display = 'flex';
         document.getElementById('tplId').value = '';
         document.getElementById('tplName').value = '';
         document.getElementById('tplLang').value = 'all';
         document.getElementById('tplCode').value = '';
-        document.getElementById('btnDelTpl').style.display = 'none';
+        const btnDel = document.getElementById('btnDelTpl');
+        btnDel.style.display = 'none';
+        btnDel.classList.add('d-none');
         document.getElementById('tplName').focus();
     }
 
     function editTemplate(index, element) {
+        if (element.classList.contains('active')) {
+            element.classList.remove('active');
+            const editCol = document.getElementById('templateEditCol');
+            editCol.style.display = 'none';
+            editCol.classList.add('d-none');
+            return;
+        }
+
         document.querySelectorAll('#templateList .template-item').forEach(el => el.classList.remove('active'));
         element.classList.add('active');
 
         const t = templates[index];
-        document.getElementById('templateEditCol').style.display = 'flex';
+        const editCol = document.getElementById('templateEditCol');
+        editCol.classList.remove('d-none');
+        editCol.style.display = 'flex';
         document.getElementById('tplId').value = t.id;
         document.getElementById('tplName').value = t.name;
         document.getElementById('tplLang').value = t.language;
         document.getElementById('tplCode').value = t.code;
-        document.getElementById('btnDelTpl').style.display = 'block';
+        const btnDel = document.getElementById('btnDelTpl');
+        btnDel.classList.remove('d-none');
+        btnDel.style.display = 'block';
     }
 
     async function saveTemplate() {
@@ -418,7 +435,9 @@
             });
             const data = await res.json();
             if (data.success) {
-                document.getElementById('templateEditCol').style.display = 'none';
+                const editCol = document.getElementById('templateEditCol');
+                editCol.style.display = 'none';
+                editCol.classList.add('d-none');
                 loadTemplates();
             } else {
                 alert("Lỗi: " + data.error);
@@ -463,11 +482,21 @@
     }
 
     function editSnippet(index, element) {
+        if (element.classList.contains('active')) {
+            element.classList.remove('active');
+            const editCol = document.getElementById('snippetEditCol');
+            editCol.style.display = 'none';
+            editCol.classList.add('d-none');
+            return;
+        }
+
         document.querySelectorAll('#snippetList .template-item').forEach(el => el.classList.remove('active'));
         element.classList.add('active');
 
         const s = snippets[index];
-        document.getElementById('snippetEditCol').style.display = 'flex';
+        const editCol = document.getElementById('snippetEditCol');
+        editCol.classList.remove('d-none');
+        editCol.style.display = 'flex';
         document.getElementById('snpHashId').value = s.hash_id;
         document.getElementById('snpTitle').value = s.title;
         document.getElementById('snpLang').value = s.language;
@@ -519,7 +548,9 @@
             });
             const data = await res.json();
             if (data.success) {
-                document.getElementById('snippetEditCol').style.display = 'none';
+                const editCol = document.getElementById('snippetEditCol');
+                editCol.style.display = 'none';
+                editCol.classList.add('d-none');
                 loadSnippets();
             } else {
                 alert("Lỗi: " + data.error);
