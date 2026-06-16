@@ -67,8 +67,7 @@
                                 <div class="data-label">Tên tác giả</div>
                                 <div class="data-value">
                                     {{ p_form.display_name }}
-                                    {% for error in p_form.display_name.errors %}<div class="error-text">{{ error }}
-                                    </div>{% endfor %}
+                                    {% for error in p_form.display_name.errors %}<div class="error-text">{{ error }}</div>{% endfor %}
                                 </div>
                             </div>
                         </div>
@@ -93,48 +92,42 @@
                                 <div class="data-label">Ngôn ngữ mặc định</div>
                                 <div class="data-value">
                                     {{ p_form.default_language }}
-                                    {% for error in p_form.default_language.errors %}<div class="error-text">{{ error }}
-                                    </div>{% endfor %}
+                                    {% for error in p_form.default_language.errors %}<div class="error-text">{{ error }}</div>{% endfor %}
                                 </div>
                             </div>
                             <div class="data-row">
                                 <div class="data-label">Giao diện Hệ thống</div>
                                 <div class="data-value">
                                     {{ p_form.favorite_theme }}
-                                    {% for error in p_form.favorite_theme.errors %}<div class="error-text">{{ error }}
-                                    </div>{% endfor %}
+                                    {% for error in p_form.favorite_theme.errors %}<div class="error-text">{{ error }}</div>{% endfor %}
                                 </div>
                             </div>
                             <div class="data-row">
                                 <div class="data-label">Theme Code Editor</div>
                                 <div class="data-value">
                                     {{ p_form.editor_theme }}
-                                    {% for error in p_form.editor_theme.errors %}<div class="error-text">{{ error }}
-                                    </div>{% endfor %}
+                                    {% for error in p_form.editor_theme.errors %}<div class="error-text">{{ error }}</div>{% endfor %}
                                 </div>
                             </div>
                             <div class="data-row">
                                 <div class="data-label">Font chữ Code</div>
                                 <div class="data-value">
                                     {{ p_form.editor_font_family }}
-                                    {% for error in p_form.editor_font_family.errors %}<div class="error-text">{{ error
-                                        }}</div>{% endfor %}
+                                    {% for error in p_form.editor_font_family.errors %}<div class="error-text">{{ error }}</div>{% endfor %}
                                 </div>
                             </div>
                             <div class="data-row">
                                 <div class="data-label">Kích cỡ chữ Code</div>
                                 <div class="data-value">
                                     {{ p_form.editor_font_size }}
-                                    {% for error in p_form.editor_font_size.errors %}<div class="error-text">{{ error }}
-                                    </div>{% endfor %}
+                                    {% for error in p_form.editor_font_size.errors %}<div class="error-text">{{ error }}</div>{% endfor %}
                                 </div>
                             </div>
                             <div class="data-row" style="align-items: flex-start;">
                                 <div class="data-label pt-1">Tiểu sử (Bio)</div>
                                 <div class="data-value">
                                     {{ p_form.bio }}
-                                    {% for error in p_form.bio.errors %}<div class="error-text">{{ error }}</div>{%
-                                    endfor %}
+                                    {% for error in p_form.bio.errors %}<div class="error-text">{{ error }}</div>{% endfor %}
                                 </div>
                             </div>
                         </div>
