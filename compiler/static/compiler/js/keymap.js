@@ -53,8 +53,15 @@ const ACTION_LABELS = {
     prevStep: "Bước trước đó (Debug)"
 };
 
-let currentKeymap = JSON.parse(localStorage.getItem("uni_keymap")) || Object.assign({}, KEYMAP_TEMPLATES.vscode);
+let defaultTemplate = Object.assign({}, KEYMAP_TEMPLATES.vscode);
+let savedKeymap = JSON.parse(localStorage.getItem("uni_keymap"));
+let currentKeymap = savedKeymap ? Object.assign(defaultTemplate, savedKeymap) : defaultTemplate;
 let currentTemplateName = localStorage.getItem("uni_keymap_name") || "vscode";
+
+// Đảm bảo cập nhật lại uni_keymap với các key mới thêm
+if (savedKeymap) {
+    localStorage.setItem("uni_keymap", JSON.stringify(currentKeymap));
+}
 
 // --- HÀM KIỂM TRA PHÍM TẮT DÙNG CHUNG ---
 window.checkShortcut = function(e, shortcutStr) {
