@@ -265,7 +265,8 @@ require(['vs/editor/editor.main'], function() {
     }
 
     // Thêm action cho phím tắt mở Menu Template
-    const scOpenTemplate = localStorage.getItem('sc_openTemplate') || 'Alt+J';
+    const tempKm = JSON.parse(localStorage.getItem('uni_keymap')) || {};
+    const scOpenTemplate = tempKm.openTemplate || 'Ctrl+J';
     let monacoKeyMod = 0;
     if (scOpenTemplate.includes('Ctrl')) monacoKeyMod |= monaco.KeyMod.CtrlCmd;
     if (scOpenTemplate.includes('Alt')) monacoKeyMod |= monaco.KeyMod.Alt;
@@ -938,8 +939,8 @@ function checkShortcut(e, shortcutStr) {
 document.addEventListener('keydown', function(e) {
     const km = typeof currentKeymap !== 'undefined' ? currentKeymap : {};
     const scRunCode = km.runCode || 'F5';
-    const scNextStep = localStorage.getItem('sc_nextStep') || 'Ctrl+ArrowRight';
-    const scPrevStep = localStorage.getItem('sc_prevStep') || 'Ctrl+ArrowLeft';
+    const scNextStep = km.nextStep || 'Ctrl+ArrowRight';
+    const scPrevStep = km.prevStep || 'Ctrl+ArrowLeft';
 
     if (checkShortcut(e, scRunCode)) {
         e.preventDefault();

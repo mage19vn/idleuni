@@ -11,7 +11,10 @@ const KEYMAP_TEMPLATES = {
         moveLineUp: "Alt+ArrowUp",
         moveLineDown: "Alt+ArrowDown",
         deleteLine: "Ctrl+Shift+K",
-        multiCursor: "Ctrl+D"
+        multiCursor: "Ctrl+D",
+        openTemplate: "Ctrl+J",
+        nextStep: "Ctrl+ArrowRight",
+        prevStep: "Ctrl+ArrowLeft"
     },
     codeblocks: {
         runCode: "F9",
@@ -25,7 +28,10 @@ const KEYMAP_TEMPLATES = {
         moveLineUp: "Alt+ArrowUp", 
         moveLineDown: "Alt+ArrowDown", 
         deleteLine: "Ctrl+Shift+L",
-        multiCursor: "Ctrl+R" 
+        multiCursor: "Ctrl+R",
+        openTemplate: "Ctrl+J",
+        nextStep: "Ctrl+ArrowRight",
+        prevStep: "Ctrl+ArrowLeft"
     }
 };
 
@@ -41,7 +47,10 @@ const ACTION_LABELS = {
     moveLineUp: "Di chuyển dòng lên",
     moveLineDown: "Di chuyển dòng xuống",
     deleteLine: "Xóa dòng hiện tại",
-    multiCursor: "Chọn nhiều từ giống nhau"
+    multiCursor: "Chọn nhiều từ giống nhau",
+    openTemplate: "Gợi ý Template",
+    nextStep: "Bước tiếp theo (Debug)",
+    prevStep: "Bước trước đó (Debug)"
 };
 
 let currentKeymap = JSON.parse(localStorage.getItem("uni_keymap")) || Object.assign({}, KEYMAP_TEMPLATES.vscode);
