@@ -1,25 +1,9 @@
 @echo off
 setlocal
 echo =======================================================
-echo     DANG DAY CODE LEN GITHUB VA BUILD HE THONG (LOCAL)
+echo     DANG BUILD VA KHOI DONG LAI HE THONG (LOCAL)
 echo =======================================================
-echo.
 
-echo 0. Dang kiem tra va day code len GitHub...
-git add -A
-git diff --cached --quiet
-if %errorlevel% equ 0 (
-    echo Khong co thay doi moi de commit.
-) else (
-    for /f "delims=" %%i in ('powershell -Command "Get-Date -Format 'yyyy-MM-dd HH:mm:ss'"') do set TIMESTAMP=%%i
-    git commit -m "update: auto-deploy %TIMESTAMP%"
-    git push origin main
-    if %errorlevel% neq 0 (
-        echo CANH BAO: Push len GitHub that bai. Kiem tra mang hoac token.
-    ) else (
-        echo Push thanh cong len GitHub.
-    )
-)
 
 echo.
 :: Kiem tra phien ban docker compose
