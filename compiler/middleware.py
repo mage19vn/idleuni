@@ -17,7 +17,7 @@ class SecurityHeadersMiddleware:
         csp_directives = [
             "default-src 'self'",
             (
-                "script-src 'self' 'unsafe-eval' "
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval' "
                 "https://cdnjs.cloudflare.com "
                 "https://cdn.jsdelivr.net "
                 "https://unpkg.com "
