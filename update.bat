@@ -3,9 +3,8 @@ setlocal
 echo =======================================================
 echo     DANG BUILD VA KHOI DONG LAI HE THONG (LOCAL)
 echo =======================================================
-
-
 echo.
+
 :: Kiem tra phien ban docker compose
 docker compose version >NUL 2>NUL
 if %errorlevel% equ 0 (
@@ -20,6 +19,13 @@ echo 1. Dang dung cac container hien tai...
 echo.
 echo 2. Dang build va khoi dong lai (Bao gom API Server, DB, Redis, Celery)...
 %DOCKER_CMD% up -d --build
+if %errorlevel% neq 0 (
+    echo =======================================================
+    echo  LOI: BUILD / KHOI DONG THAT BAI!
+    echo =======================================================
+    pause
+    exit /b 1
+)
 
 echo.
 echo 3. Kiem tra Sandbox Images (Python, C++)...
@@ -59,6 +65,17 @@ goto :wait_db
 if %errorlevel% neq 0 (
     echo =======================================================
     echo  LOI: MIGRATE THAT BAI! Kiem tra lai he thong.
+    echo =======================================================
+    pause
+    exit /b 1
+)
+
+echo.
+echo 5. Dang gom file tinh (CSS/JS)...
+%DOCKER_CMD% exec -T web python manage.py collectstatic --noinput
+if %errorlevel% neq 0 (
+    echo =======================================================
+    echo  LOI: GOM FILE TINH THAT BAI!
     echo =======================================================
     pause
     exit /b 1

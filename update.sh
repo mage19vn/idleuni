@@ -5,7 +5,14 @@ echo "======================================================="
 echo ""
 
 TARGET_DIR="${1:-$(pwd)}"
-cd "$TARGET_DIR" || exit 1
+cd "$TARGET_DIR" || { echo "LOI: Khong the truy cap thu muc $TARGET_DIR"; read -rp "Nhan Enter de thoat..."; exit 1; }
+
+# Ham ket thuc: hien thi thong bao va cho nhan Enter
+finish() {
+    echo ""
+    read -rp "Nhan Enter de thoat..."
+    exit "${1:-0}"
+}
 
 echo "1. Dong bo code tu GitHub..."
 if [ ! -d ".git" ]; then
@@ -33,7 +40,12 @@ docker stop unicorns_app 2>/dev/null || true
 docker rm unicorns_app 2>/dev/null || true
 
 echo "3. Build va khoi dong lai (Du lieu CSDL van duoc bao toan trong Volume)..."
-$DOCKER_CMD up -d --build
+if ! $DOCKER_CMD up -d --build; then
+    echo "======================================================="
+    echo " LOI: BUILD / KHOI DONG THAT BAI!"
+    echo "======================================================="
+    finish 1
+fi
 
 echo "4. Kiem tra Sandbox Images (Python, C++)..."
 if ! docker image inspect unicorns-python:latest > /dev/null 2>&1; then
@@ -62,7 +74,7 @@ if ! $DOCKER_CMD exec -T web python manage.py migrate; then
     echo "======================================================="
     echo " LOI: MIGRATE THAT BAI!"
     echo "======================================================="
-    exit 1
+    finish 1
 fi
 
 echo "Dang gom file tinh (CSS/JS)..."
@@ -70,10 +82,11 @@ if ! $DOCKER_CMD exec -T web python manage.py collectstatic --noinput; then
     echo "======================================================="
     echo " LOI: GOM FILE TINH THAT BAI!"
     echo "======================================================="
-    exit 1
+    finish 1
 fi
 
 echo ""
 echo "======================================================="
 echo "  DEPLOY THANH CONG TREN SERVER!"
 echo "======================================================="
+finish 0

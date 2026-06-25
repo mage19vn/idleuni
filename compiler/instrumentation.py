@@ -79,6 +79,19 @@ std::string __to_json(const std::vector<T>& val, std::string type = "list") {
     return res;
 }
 
+template <typename T, size_t N>
+std::string __to_json(const T (&val)[N], std::string type = "list") {
+    std::string res = "{\"type\": \"list\", \"val\": [";
+    for (size_t i = 0; i < N; ++i) {
+        std::ostringstream oss;
+        oss << val[i];
+        res += "\"" + __escape_json(oss.str()) + "\"";
+        if (i < N - 1) res += ", ";
+    }
+    res += "]}";
+    return res;
+}
+
 void __dump_state(int line, std::string func_name, const std::map<std::string, std::string>& vars) {
     if (!__trace_init) {
         __trace_file.open("trace.json");
@@ -123,6 +136,7 @@ class Instrumenter:
         )
         self.insertions = [] # list of (offset, string_to_insert)
         self.scopes = [] # Stack of list of var_names
+        self.global_vars = []
         
     def get_all_vars_in_scope(self):
         vars_in_scope = []
@@ -135,6 +149,8 @@ class Instrumenter:
         dump_code = f" {{ std::map<std::string, std::string> __v; "
         for v in vars_in_scope:
             dump_code += f"__v[\"{v}\"] = __to_json({v}); "
+        for v in self.global_vars:
+            dump_code += f"__v[\"[Global] {v}\"] = __to_json({v}); "
         dump_code += f"__dump_state({line_num}, \"{func_name}\", __v); }}"
         return dump_code
 
@@ -146,6 +162,11 @@ class Instrumenter:
     def traverse(self, node, current_func_name="main"):
         if node.location.file and node.location.file.name != 'temp_source.cpp':
             return
+            
+        if node.kind == clang.cindex.CursorKind.VAR_DECL and node.lexical_parent and node.lexical_parent.kind == clang.cindex.CursorKind.TRANSLATION_UNIT:
+            type_spelling = node.type.spelling
+            if any(t in type_spelling for t in ['int', 'float', 'double', 'char', 'string', 'bool', 'long', 'short', 'vector']):
+                self.global_vars.append(node.spelling)
             
         if node.kind == clang.cindex.CursorKind.FUNCTION_DECL:
             current_func_name = node.spelling
@@ -191,6 +212,25 @@ class Instrumenter:
 
             self.scopes.pop()
         else:
+            if node.kind in [clang.cindex.CursorKind.FOR_STMT, clang.cindex.CursorKind.WHILE_STMT, clang.cindex.CursorKind.CXX_FOR_RANGE_STMT]:
+                children = list(node.get_children())
+                if children:
+                    body = children[-1]
+                    if body.kind != clang.cindex.CursorKind.COMPOUND_STMT:
+                        offset_start = body.extent.start.offset
+                        offset_end = body.extent.end.offset
+                        temp_offset = offset_end
+                        while temp_offset < len(self.code) and self.code[temp_offset].isspace():
+                            temp_offset += 1
+                        if temp_offset < len(self.code) and self.code[temp_offset] == ';':
+                            offset_end = temp_offset + 1
+                        
+                        next_line = body.extent.end.line + 1
+                        dump_code = self.generate_dump_code(next_line, current_func_name)
+                        
+                        self.insertions.append((offset_end, "} " + dump_code))
+                        self.insertions.append((offset_start, "{ "))
+                        
             for child in node.get_children():
                 self.traverse(child, current_func_name)
 

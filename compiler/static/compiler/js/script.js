@@ -1,5 +1,4 @@
 const consoleOutput = document.getElementById('consoleOutput');
-const visualizerArea = document.getElementById('visualizerArea');
 const runBtn = document.getElementById('runBtn');
 const loader = document.getElementById('loader');
 const langSelect = document.getElementById('langSelect');
@@ -20,9 +19,6 @@ let currentStepIndex = 0;
 let isDebugOpen = false;
 let visibleVariables = new Set();
 let currentErrorLine = -1;
-
-let isVisualizerVisible = false;
-let isPrevLineVisible = true;
 
 // ==========================================
 // XỬ LÝ THANH KÉO THẢ (RESIZER)
@@ -85,13 +81,11 @@ if(resizer) resizer.addEventListener('mousedown', mouseDownHandler);
 // ==========================================
 function switchTab(tabName) {
     const leftP = document.getElementById('leftPane');
-    const rightP = document.getElementById('rightPane');
     const editorC = document.getElementById('editorContainer');
     const ioW = document.getElementById('ioWrapper');
     const buttons = document.querySelectorAll('.tab-btn');
 
     leftP.style.display = 'none';
-    rightP.style.display = 'none';
     buttons.forEach(b => b.classList.remove('active'));
 
     if (tabName === 'editor') {
@@ -104,9 +98,6 @@ function switchTab(tabName) {
         editorC.style.display = 'none';
         ioW.style.display = 'flex';
         buttons[1].classList.add('active');
-    } else if (tabName === 'visualizer') {
-        rightP.style.display = 'flex';
-        buttons[2].classList.add('active');
     }
     
     if (monacoEditor) monacoEditor.layout();
@@ -425,47 +416,7 @@ if (savedTheme === 'dark') {
 
 
 
-function toggleVisualizer() {
-    isVisualizerVisible = !isVisualizerVisible;
-    const paneRight = document.querySelector('.pane-right');
-    const workspace = document.querySelector('.workspace'); 
-    const btnToggleVis = document.getElementById('btnToggleVis');
-    const btnTogglePrev = document.getElementById('btnTogglePrev');
-    
-    const resizer = document.getElementById('resizer');
-    const leftPane = document.getElementById('leftPane');
 
-    if (isVisualizerVisible) {
-        if(paneRight) paneRight.style.display = 'flex'; 
-        if(workspace) workspace.classList.remove('hide-vis'); 
-        if(btnToggleVis) btnToggleVis.innerHTML = '<i class="ph-bold ph-eye-slash"></i> Ẩn bảng Visualizer';
-        if (isPrevLineVisible && btnTogglePrev) btnTogglePrev.classList.remove('disabled');
-        
-        if(resizer) resizer.style.display = 'flex';
-        if(leftPane) leftPane.style.flex = ''; 
-    } else {
-        if(paneRight) paneRight.style.display = 'none'; 
-        if(workspace) workspace.classList.add('hide-vis');
-        if(btnToggleVis) btnToggleVis.innerHTML = '<i class="ph-bold ph-eye"></i> Hiện bảng Visualizer';
-        if(btnTogglePrev) btnTogglePrev.classList.add('disabled');
-        
-        if(resizer) resizer.style.display = 'none';
-        if(leftPane) leftPane.style.flex = '1 1 100%';
-    }
-    updateArrowPosition();
-    
-    if (monacoEditor) {
-        setTimeout(() => monacoEditor.layout(), 50);
-    }
-}
-
-function togglePrevLine() {
-    if (!isVisualizerVisible) return; 
-    isPrevLineVisible = !isPrevLineVisible;
-    const btn = document.getElementById('btnTogglePrev');
-    if(btn) isPrevLineVisible ? btn.classList.remove('disabled') : btn.classList.add('disabled');
-    updateArrowPosition();
-}
 
 function toggleDebug() {
     isDebugOpen = !isDebugOpen;
@@ -513,30 +464,6 @@ function updateArrowPosition() {
                 linesDecorationsClassName: 'monaco-error-margin' 
             }
         });
-    }
-
-    if (globalTraceData.length > 0 && currentStepIndex >= 0 && isVisualizerVisible) {
-        const step = globalTraceData[currentStepIndex];
-        const current_line_num = step ? step.line : 0;
-        if (current_line_num && current_line_num > 0) {
-            monacoEditor.revealLineInCenterIfOutsideViewport(current_line_num);
-        }
-        
-        if (currentStepIndex > 0 && isPrevLineVisible) {
-            const prevStep = globalTraceData[currentStepIndex - 1];
-            const previous_line_num = prevStep ? prevStep.line : 0;
-            
-            if (previous_line_num && previous_line_num > 0 && previous_line_num !== current_line_num) {
-                newDecorations.push({
-                    range: new monaco.Range(previous_line_num, 1, previous_line_num, 1),
-                    options: { 
-                        isWholeLine: true, 
-                        className: 'monaco-prev-line',
-                        linesDecorationsClassName: 'monaco-prev-margin'
-                    }
-                });
-            }
-        }
     }
 
     if (!monacoEditor._customDecorations) {
@@ -632,8 +559,7 @@ function setupTrace(traceData, fullOutput) {
             timeSlider.disabled = false;
         }
 
-        if (!isVisualizerVisible) currentStepIndex = globalTraceData.length - 1;
-        else currentStepIndex = 0;
+        currentStepIndex = globalTraceData.length - 1;
         renderStep(currentStepIndex);
     } else {
         if (timeSlider) {
@@ -651,14 +577,12 @@ function setupTrace(traceData, fullOutput) {
 
 function renderStep(index) {
     const step = globalTraceData[index];
-    const prevStep = index > 0 ? globalTraceData[index - 1] : null; 
     
     if (!step) return;
 
     if (timeSlider) timeSlider.value = index;
     if (stepCounter) stepCounter.innerText = `${index + 1}/${globalTraceData.length}`;
     
-    renderMemory(step, prevStep); 
     updateArrowPosition();
 
     if(prevBtn) prevBtn.disabled = index === 0;
@@ -672,130 +596,7 @@ function renderStep(index) {
     }
 }
 
-function renderMemory(step, prevStep) {
-    if(!visualizerArea) return;
-    visualizerArea.innerHTML = '';
-    let hasData = false;
 
-    let prevVarsMap = {};
-    if (prevStep) {
-        if (prevStep.globalsSnapshot) {
-            Object.entries(prevStep.globalsSnapshot).forEach(([k, v]) => prevVarsMap['global_' + k] = JSON.stringify(v));
-        }
-        if (prevStep.callStackSnapshot) {
-            prevStep.callStackSnapshot.forEach(frame => {
-                Object.entries(frame.vars).forEach(([k, v]) => prevVarsMap[frame.funcName + '_' + k] = JSON.stringify(v));
-            });
-        }
-    }
-
-    const createFrameUI = (title, varsObj, isGlobal) => {
-        const entries = Object.entries(varsObj || {}).filter(([k]) => !k.startsWith('__') && visibleVariables.has(k));
-        
-        const frameDiv = document.createElement('div');
-        frameDiv.className = 'memory-frame';
-
-        const header = document.createElement('div');
-        header.className = 'frame-header' + (isGlobal ? ' global' : '');
-        header.innerHTML = isGlobal ? `🌐 Biến Toàn Cục (Global)` : `📍 Frame: <span>${title}()</span>`;
-        frameDiv.appendChild(header);
-
-        if (entries.length === 0 && !isGlobal) {
-            const emptyMsg = document.createElement('div');
-            emptyMsg.style.cssText = 'color:#8b949e; font-size:13px; font-style:italic;';
-            emptyMsg.textContent = 'Trống (Chưa có biến cục bộ)';
-            frameDiv.appendChild(emptyMsg);
-            visualizerArea.appendChild(frameDiv);
-            hasData = true;
-            return;
-        } else if (entries.length === 0 && isGlobal) return;
-
-        for (const [k, data] of entries) {
-            const name = isGlobal ? k.replace('[Global] ', '') : k;
-            const row = document.createElement('div');
-            row.className = 'var-row';
-            
-            const mapKey = (isGlobal ? 'global_' : title + '_') + k;
-            const currentValStr = JSON.stringify(data);
-            
-            if (!prevVarsMap.hasOwnProperty(mapKey)) {
-                row.classList.add('var-new'); 
-            } else if (prevVarsMap[mapKey] !== currentValStr) {
-                row.classList.add('var-updated'); 
-            }
-
-            const nameDiv = document.createElement('div');
-            nameDiv.className = 'var-name';
-            nameDiv.textContent = name;
-            
-            const eqDiv = document.createElement('div');
-            eqDiv.className = 'var-eq';
-            eqDiv.textContent = '=';
-
-            const valsDiv = document.createElement('div');
-            valsDiv.className = 'var-values';
-
-            let dataType = data.type || "prim";
-            let dataVal = data.val !== undefined ? data.val : data;
-
-            if (dataType === 'list') {
-                const bOpen = document.createElement('span'); bOpen.className = 'var-symbol'; bOpen.textContent = '[';
-                valsDiv.appendChild(bOpen);
-                (Array.isArray(dataVal) ? dataVal : []).forEach(item => {
-                    const block = document.createElement('div');
-                    block.className = 'var-block';
-                    block.textContent = item;
-                    valsDiv.appendChild(block);
-                });
-                const bClose = document.createElement('span'); bClose.className = 'var-symbol'; bClose.textContent = ']';
-                valsDiv.appendChild(bClose);
-            } else if (dataType === 'object' || dataType === 'dict') {
-                const objBox = document.createElement('div');
-                objBox.className = 'var-obj-box';
-                const header = document.createElement('div');
-                header.className = 'var-obj-header';
-                header.textContent = dataType === 'object' ? `Class: ${data.class_name}` : `Dictionary`;
-                objBox.appendChild(header);
-
-                const subEntries = Object.entries(dataVal || {});
-                if (subEntries.length === 0) {
-                    const empty = document.createElement('div');
-                    empty.style.color = 'var(--text-muted)';
-                    empty.style.fontSize = '12px';
-                    empty.textContent = '{} (Trống)';
-                    objBox.appendChild(empty);
-                } else {
-                    subEntries.forEach(([key, val]) => {
-                        const objRow = document.createElement('div');
-                        objRow.className = 'var-obj-row';
-                        objRow.innerHTML = `<span class="var-obj-key">${key}:</span> <span class="var-obj-val">${val}</span>`;
-                        objBox.appendChild(objRow);
-                    });
-                }
-                valsDiv.appendChild(objBox);
-            } else {
-                const block = document.createElement('div');
-                block.className = 'var-block';
-                block.textContent = dataVal;
-                valsDiv.appendChild(block);
-            }
-
-            row.appendChild(nameDiv);
-            row.appendChild(eqDiv);
-            row.appendChild(valsDiv);
-            frameDiv.appendChild(row);
-        }
-        visualizerArea.appendChild(frameDiv);
-        hasData = true;
-    };
-
-    if (step.globalsSnapshot) createFrameUI('', step.globalsSnapshot, true);
-    if (step.callStackSnapshot && step.callStackSnapshot.length > 0) {
-        step.callStackSnapshot.forEach(frame => createFrameUI(frame.funcName, frame.vars, false));
-    }
-
-    if (!hasData) visualizerArea.innerHTML = '<div style="color:#8b949e; font-size:13px; text-align:center; margin-top:40px;">Chưa có dữ liệu biến.</div>';
-}
 
 function nextStep() {
     if (currentStepIndex < globalTraceData.length - 1) {
@@ -821,7 +622,6 @@ async function runCode() {
     const inputs = stdInput.value; 
     
     if(consoleOutput) consoleOutput.innerHTML = '';
-    if(visualizerArea) visualizerArea.innerHTML = '';
     if(runBtn) {
         runBtn.disabled = true;
         runBtn.innerHTML = '<i class="ph-bold ph-spinner spinning"></i>';
@@ -1057,91 +857,19 @@ if (timeSlider) {
     });
 }
 
-// --- LOGIC KÉO THẢ RESIZER ---
+// --- LOGIC KÉO THẢ RESIZER INTERNAL ---
 document.addEventListener('DOMContentLoaded', function() {
-    const resizer = document.getElementById('resizer');
-    const leftPane = document.getElementById('leftPane');
-    const rightPane = document.getElementById('rightPane');
     const workspace = document.getElementById('workspace');
-
-    if (!resizer || !leftPane || !rightPane || !workspace) return;
-
-    let isResizing = false;
-    let savedLeftWidth = ''; // Lưu trữ lại chiều rộng khi ẩn/hiện visualizer
-
-    resizer.addEventListener('mousedown', function(e) {
-        isResizing = true;
-        document.body.style.cursor = 'col-resize';
-        resizer.classList.add('resizer-active');
-        
-        // Tránh bị bôi đen text khi kéo
-        document.body.style.userSelect = 'none';
-        
-        // Thêm overlay để iframe/editor không cản trở event chuột
-        const overlay = document.createElement('div');
-        overlay.id = 'dragOverlay';
-        overlay.style.position = 'absolute';
-        overlay.style.top = '0';
-        overlay.style.left = '0';
-        overlay.style.width = '100%';
-        overlay.style.height = '100%';
-        overlay.style.zIndex = '9999';
-        workspace.appendChild(overlay);
-        workspace.style.position = 'relative';
-    });
-
-    document.addEventListener('mousemove', function(e) {
-        if (!isResizing) return;
-        
-        const workspaceRect = workspace.getBoundingClientRect();
-        let newLeftWidth = e.clientX - workspaceRect.left;
-        
-        // Chiều rộng tối thiểu để chứa đủ các nút công cụ
-        const minLeftWidth = 790; 
-        const minRightWidth = 320; 
-
-        if (newLeftWidth < minLeftWidth) newLeftWidth = minLeftWidth;
-        if (workspaceRect.width - newLeftWidth < minRightWidth) {
-            newLeftWidth = workspaceRect.width - minRightWidth;
-        }
-
-        leftPane.style.flex = `0 0 ${newLeftWidth}px`;
-        rightPane.style.flex = '1 1 0%';
-        savedLeftWidth = leftPane.style.flex;
-        
-        if (typeof monacoEditor !== 'undefined' && monacoEditor) {
-            monacoEditor.layout();
-        }
-    });
-
-    document.addEventListener('mouseup', function(e) {
-        if (isResizing) {
-            isResizing = false;
-            document.body.style.cursor = '';
-            resizer.classList.remove('resizer-active');
-            document.body.style.userSelect = '';
-            
-            const overlay = document.getElementById('dragOverlay');
-            if (overlay) overlay.remove();
-            
-            if (typeof monacoEditor !== 'undefined' && monacoEditor) {
-                monacoEditor.layout();
-            }
-        }
-    });
-
-    // --- LOGIC CHO RESIZER INTERNAL (Khi tắt Visualizer) ---
     const resizerInternal = document.getElementById('resizerInternal');
+    const leftPane = document.getElementById('leftPane');
     const editorContainer = document.getElementById('editorContainer');
     const ioWrapper = document.getElementById('ioWrapper');
     let isResizingInternal = false;
-    let savedEditorFlex = ''; // Lưu trữ lại flex khi chuyển đổi
 
     if (resizerInternal && editorContainer && ioWrapper) {
         resizerInternal.addEventListener('mousedown', function(e) {
             isResizingInternal = true;
-            const isHorizontal = workspace.classList.contains('hide-vis');
-            document.body.style.cursor = isHorizontal ? 'col-resize' : 'row-resize';
+            document.body.style.cursor = 'col-resize';
             resizerInternal.classList.add('resizer-active');
             document.body.style.userSelect = 'none';
             
@@ -1153,43 +881,25 @@ document.addEventListener('DOMContentLoaded', function() {
             overlay.style.width = '100%';
             overlay.style.height = '100%';
             overlay.style.zIndex = '9999';
-            workspace.appendChild(overlay);
+            if(workspace) workspace.appendChild(overlay);
         });
 
         document.addEventListener('mousemove', function(e) {
             if (!isResizingInternal) return;
-            const isHorizontal = workspace.classList.contains('hide-vis');
-            const parentRect = leftPane.getBoundingClientRect();
+            const parentRect = leftPane ? leftPane.getBoundingClientRect() : {left: 0, width: window.innerWidth};
             
-            if (isHorizontal) {
-                // Kéo thả theo chiều ngang (khi tắt Visualizer)
-                let newEditorWidth = e.clientX - parentRect.left;
-                const minEditorWidth = 790;
-                const minIOWidth = 250;
-                
-                if (newEditorWidth < minEditorWidth) newEditorWidth = minEditorWidth;
-                if (parentRect.width - newEditorWidth < minIOWidth) {
-                    newEditorWidth = parentRect.width - minIOWidth;
-                }
-                
-                editorContainer.style.flex = `0 0 ${newEditorWidth}px`;
-                ioWrapper.style.flex = '1 1 0%';
-                savedEditorFlex = editorContainer.style.flex;
-            } else {
-                // Kéo thả theo chiều dọc (khi bật Visualizer)
-                let newEditorHeight = e.clientY - parentRect.top;
-                const minEditorHeight = 100;
-                const minIOHeight = 100;
-                
-                if (newEditorHeight < minEditorHeight) newEditorHeight = minEditorHeight;
-                if (parentRect.height - newEditorHeight < minIOHeight) {
-                    newEditorHeight = parentRect.height - minIOHeight;
-                }
-                
-                editorContainer.style.flex = `0 0 ${newEditorHeight}px`;
-                ioWrapper.style.flex = '1 1 0%';
-                savedEditorFlex = editorContainer.style.flex;
+            // Kéo thả theo chiều ngang
+            let newEditorWidth = e.clientX - parentRect.left;
+            const minEditorWidth = 400;
+            const minIOWidth = 250;
+            
+            if (newEditorWidth < minEditorWidth) newEditorWidth = minEditorWidth;
+            if (parentRect.width - newEditorWidth < minIOWidth) {
+                newEditorWidth = parentRect.width - minIOWidth;
             }
+            
+            editorContainer.style.flex = `0 0 ${newEditorWidth}px`;
+            ioWrapper.style.flex = '1 1 0%';
             
             if (typeof monacoEditor !== 'undefined' && monacoEditor) {
                 monacoEditor.layout();
@@ -1211,19 +921,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         });
-    }
-
-    // Sửa đè lại hàm toggleVisualizer để nhớ chiều rộng cũ nếu có
-    const originalToggleVisualizer = window.toggleVisualizer;
-    if (typeof originalToggleVisualizer === 'function') {
-        window.toggleVisualizer = function() {
-            originalToggleVisualizer();
-            // Nếu đang hiển thị Visualizer
-            if (isVisualizerVisible && savedLeftWidth) {
-                leftPane.style.flex = savedLeftWidth;
-                rightPane.style.flex = '1 1 0%';
-            }
-        };
     }
 });
 

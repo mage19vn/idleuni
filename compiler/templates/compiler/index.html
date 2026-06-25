@@ -18,8 +18,6 @@
                 <div style="font-weight: 700; margin-bottom: 10px; font-size: 13px; color: var(--text-main);">Giao diện & Công cụ:</div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                     <button id="themeToggleBtn" class="setting-btn" onclick="toggleTheme(event)" title="Chuyển đổi Sáng/Tối"><i class="ph-bold ph-moon"></i> Giao diện</button>
-                    <button id="btnToggleVis" class="setting-btn" onclick="toggleVisualizer()"><i class="ph-bold ph-eye"></i> Visualizer</button>
-                    <button id="btnTogglePrev" class="setting-btn disabled" onclick="togglePrevLine()" style="grid-column: span 2;"><i class="ph-fill ph-circle" style="color: #22c55e;"></i> Dòng lệnh hiện tại</button>
                 </div>
             </div>
 
@@ -45,10 +43,9 @@
     <div class="mobile-tabs">
         <button class="tab-btn active" onclick="switchTab('editor')"><i class="ph-bold ph-code"></i> Editor</button>
         <button class="tab-btn" onclick="switchTab('console')"><i class="ph-bold ph-terminal-window"></i> Console</button>
-        <button class="tab-btn" onclick="switchTab('visualizer')"><i class="ph-bold ph-magnifying-glass"></i> Visualizer</button>
     </div>
 
-    <div class="workspace hide-vis" id="workspace">
+    <div class="workspace hide-vis" id="workspace" style="flex-direction: row;">
         <div class="pane-left" id="leftPane" style="flex: 1 1 100%;">
             <div class="editor-container" id="editorContainer">
                 <div class="pane-header" style="flex-shrink: 0; display: flex; justify-content: center; align-items: center; border-bottom: 1px solid var(--border); padding: 12px 16px;">
@@ -100,16 +97,6 @@
             </div>
         </div>
 
-        <div class="resizer" id="resizer" style="display: none;"></div>
-
-        <div class="pane-right pane" id="rightPane" style="display: none;">
-            <div class="pane-header"><i class="ph-bold ph-magnifying-glass"></i> Các biến / Hàm</div>
-            <div id="visualizerArea" class="visualizer-area">
-                <div style="color: #8b949e; font-size: 13px; text-align: center; margin-top: 40px;">
-                    Biến sẽ được mô phỏng theo từng hàm tại đây.
-                </div>
-            </div>
-        </div>
     </div>
 
     <!-- LOGO WATERMARK -->

@@ -47,7 +47,7 @@ def trim_value(v):
             return {"type": "prim", "val": s}
         elif isinstance(v, (list, tuple)):
             if len(v) > MAX_ITEMS:
-                arr = [repr(x) for x in v[:MAX_ITEMS//2]] + ["... [truncated] ..."] + [repr(x) for x in v[-MAX_ITEMS//2:]]
+                arr = [repr(x) for x in v[:MAX_ITEMS//2]] + ["... [Bị cắt bớt do quá dài] ..."] + [repr(x) for x in v[-MAX_ITEMS//2:]]
                 return {"type": "list", "val": arr}
             return {"type": "list", "val": [repr(x) for x in v]}
         elif isinstance(v, dict):
@@ -66,6 +66,7 @@ def trim_value(v):
 
 def trace_calls(frame, event, arg):
     if len(trace_log) >= MAX_STEPS:
+        trace_log.append({"line": frame.f_lineno, "func_name": "Hệ Thống", "vars": {"CẢNH BÁO": {"type": "prim", "val": "Vượt quá 5000 bước lặp. Visualizer tự động dừng để chống tràn bộ nhớ."}}})
         sys.settrace(None)
         return None
         
@@ -75,9 +76,14 @@ def trace_calls(frame, event, arg):
             return trace_calls
 
         locals_copy = {}
-        for k, v in frame.f_locals.items():
+        for k, v in frame.f_globals.items():
             if not k.startswith('__') and not isinstance(v, type) and not str(type(v)).startswith("<class 'function'>") and not str(type(v)).startswith("<class 'module'>"):
-                locals_copy[k] = trim_value(v)
+                locals_copy[f"[Global] {k}"] = trim_value(v)
+                
+        if frame.f_locals is not frame.f_globals:
+            for k, v in frame.f_locals.items():
+                if not k.startswith('__') and not isinstance(v, type) and not str(type(v)).startswith("<class 'function'>") and not str(type(v)).startswith("<class 'module'>"):
+                    locals_copy[k] = trim_value(v)
 
         func_name = frame.f_code.co_name
         if func_name == '<module>': func_name = 'Global (Main)'

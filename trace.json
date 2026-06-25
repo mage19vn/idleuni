@@ -1,0 +1,1 @@
+[{"line": 1, "func_name": "Global (Main)", "vars": {}}, {"line": 4, "func_name": "Global (Main)", "vars": {}}, {"line": 3, "func_name": "foo", "vars": {}}, {"line": 3, "func_name": "foo", "vars": {"[Global] x": {"type": "prim", "val": "20"}}}, {"line": 4, "func_name": "Global (Main)", "vars": {"[Global] x": {"type": "prim", "val": "20"}}}]
